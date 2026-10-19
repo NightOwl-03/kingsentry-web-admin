@@ -1,0 +1,27 @@
+/* =============================================================================
+   KINGSENTRY — USER ACCOUNTS PAGE CSS
+   Styles specific to user-accounts.html
+   ============================================================================= */
+
+/* --------------------------------------------------------------------------- */
+/* Users Table                                                                    */
+/* --------------------------------------------------------------------------- */
+#usersTableBody tr {
+  transition: background-color 0.12s ease;
+}
+
+#usersTableBody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Role Overview Cards                                                             */
+/* --------------------------------------------------------------------------- */
+.role-overview-card {
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.role-overview-card:hover {
+  box-shadow: 0 6px 20px -4px rgba(15, 33, 25, 0.08);
+  transform: translateY(-1px);
+}

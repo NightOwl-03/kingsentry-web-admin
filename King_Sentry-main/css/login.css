@@ -1,0 +1,851 @@
+/* =============================================================================
+   KINGSENTRY — LOGIN PAGE STYLES  (css/login.css)
+   Pixel-perfect match to the reference split-screen design.
+   Left: Full-height durian orchard with diagonal right edge
+   Right: Clean sage-cream panel, centered login form
+   ============================================================================= */
+
+/* --------------------------------------------------------------------------- */
+/* Reset & Base                                                                   */
+/* --------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body.login-body {
+  font-family: 'Inter', sans-serif;
+  background: #f2f4ef;
+  color: #1a4731;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------- */
+/* WRAPPER — true full-screen flex row                                            */
+/* --------------------------------------------------------------------------- */
+.login-split-wrapper {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------- */
+/* LEFT PANEL — Durian Orchard                                                    */
+/* --------------------------------------------------------------------------- */
+.login-left-panel {
+  position: relative;
+  /* ~55% wide so diagonal looks balanced like reference */
+  flex: 0 0 55%;
+  width: 55%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Diagonal slant on right edge — matches reference image exactly */
+  clip-path: polygon(0 0, 88% 0, 100% 100%, 0 100%);
+  z-index: 2;
+}
+
+/* Full-cover background photo */
+.orchard-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  /* Subtle slow zoom on load */
+  animation: orchardZoom 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes orchardZoom {
+  from { transform: scale(1.0); }
+  to   { transform: scale(1.06); }
+}
+
+/* Dark gradient overlay — bottom-heavy so text pops */
+.orchard-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom,
+      rgba(10, 25, 16, 0.50) 0%,
+      rgba(10, 25, 16, 0.25) 35%,
+      rgba(10, 25, 16, 0.60) 75%,
+      rgba(5, 15, 10, 0.80) 100%
+    );
+  z-index: 1;
+}
+
+/* Decorative gold vine SVG at bottom of left panel */
+.orchard-vine {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Left panel content — three rows: top brand / middle hero / bottom spacer */
+.left-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 2.25rem 2.5rem;
+}
+
+/* ---- TOP BRANDING (top-left corner, small) ---- */
+.left-top-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.brand-icon-sm {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  /* Solid dark green matching the right-panel logo icon */
+  background: #1a4731;
+  border: 1.5px solid rgba(229, 169, 59, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.brand-icon-sm svg {
+  width: 20px;
+  height: 20px;
+  stroke: #e5a93b;
+}
+
+.brand-text-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brand-name-sm {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+}
+
+.brand-sub-sm {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.01em;
+}
+
+/* ---- CENTER HERO ---- */
+.left-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;  /* push content toward bottom like reference */
+  padding-bottom: 3.5rem;
+}
+
+/* Badge pill */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 100px;
+  background: rgba(229, 169, 59, 0.18);
+  border: 1px solid rgba(229, 169, 59, 0.45);
+  backdrop-filter: blur(8px);
+  color: #f3d27a;
+  font-size: 0.71rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin-bottom: 1rem;
+  width: fit-content;
+}
+
+.badge-icon {
+  width: 12px;
+  height: 12px;
+  stroke: #f3d27a;
+  flex-shrink: 0;
+}
+
+/* Main headline */
+.hero-headline {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.9rem, 3vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.13;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.headline-white {
+  color: #ffffff;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.45);
+}
+
+.headline-gold {
+  color: #f6cb65;
+  text-shadow: 0 0 24px rgba(229,169,59,0.35), 0 2px 12px rgba(0,0,0,0.4);
+}
+
+/* Description paragraph */
+.hero-description {
+  font-size: 0.84rem;
+  line-height: 1.72;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 360px;
+  font-weight: 400;
+}
+
+/* Bottom spacer to keep content above the overlay */
+.left-bottom-spacer {
+  flex-shrink: 0;
+  height: 0;
+}
+
+/* --------------------------------------------------------------------------- */
+/* RIGHT PANEL — Login Form                                                       */
+/* --------------------------------------------------------------------------- */
+.login-right-panel {
+  position: relative;
+  flex: 1 1 0;
+  height: 100vh;
+  /* Sage-cream colour matching reference */
+  background: #f2f4ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* Overlap the diagonal edge so there's no gap */
+  margin-left: -5%;
+  z-index: 1;
+}
+
+/* Very subtle radial tints in corners */
+.login-right-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 92% 6%,  rgba(229,169,59,0.06) 0%, transparent 38%),
+    radial-gradient(ellipse at 8%  94%, rgba(26,71,49,0.05)  0%, transparent 38%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------- Leaf decorations ---------- */
+.right-leaf-tr {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 160px;
+  height: 180px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 1;
+}
+
+.right-leaf-bl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 160px;
+  height: 180px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 1;
+}
+
+/* ---------- Login form wrapper ---------- */
+.login-form-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 370px;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ---- Logo ---- */
+.login-logo {
+  margin-bottom: 1.1rem;
+}
+
+.login-logo-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 15px;
+  background: #1a4731;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 18px rgba(26, 71, 49, 0.32);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-logo-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26, 71, 49, 0.42);
+}
+
+.login-logo-icon svg {
+  width: 27px;
+  height: 27px;
+  stroke: #e5a93b;
+}
+
+/* ---- Welcome heading ---- */
+.login-heading {
+  text-align: center;
+  margin-bottom: 1.6rem;
+}
+
+.login-welcome {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.15rem;
+  font-weight: 800;
+  color: #1a4731;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.login-subtext {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.3rem;
+  font-weight: 400;
+}
+
+/* ---- Form ---- */
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group {
+  width: 100%;
+  margin-bottom: 0.7rem;
+}
+
+.input-field-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Input — clean pill, no border, soft green-grey fill */
+.login-input {
+  width: 100%;
+  height: 50px;
+  background: #e6eae2;
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  color: #1a4731;
+  padding: 0 3rem;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.login-input::placeholder {
+  color: #97a898;
+  font-weight: 400;
+}
+
+.login-input:hover:not(:focus) {
+  background: #dde2d8;
+}
+
+.login-input:focus {
+  background: #dde2d8;
+  border-color: rgba(26, 71, 49, 0.3);
+  box-shadow: 0 0 0 3px rgba(26, 71, 49, 0.08);
+}
+
+/* Password eye-icon padding */
+.login-input--password {
+  padding-right: 3.1rem;
+}
+
+/* ---- Input icons ---- */
+.input-icon {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #7d9680;
+  transition: color 0.18s ease;
+}
+
+.input-icon i,
+.input-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+}
+
+.input-icon--left {
+  left: 0;
+  padding-left: 1rem;
+}
+
+.input-icon--right {
+  right: 0;
+  padding-right: 1rem;
+  pointer-events: auto;
+}
+
+.input-icon--btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7d9680;
+}
+
+.input-icon--btn:hover {
+  color: #1a4731;
+}
+
+.input-field-wrap:focus-within .input-icon--left {
+  color: #1a4731;
+}
+
+/* ---- Forgot Password ---- */
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.25rem;
+  margin-bottom: 0.9rem;
+}
+
+.forgot-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #c49a30;
+  transition: color 0.18s ease;
+  padding: 0;
+  letter-spacing: 0.005em;
+}
+
+.forgot-link:hover {
+  color: #e5a93b;
+}
+
+/* ---- Remember Me ---- */
+.remember-row {
+  width: 100%;
+  margin-bottom: 1.2rem;
+}
+
+.remember-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Native checkbox hidden */
+.remember-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Custom indicator */
+.remember-indicator {
+  flex-shrink: 0;
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
+  border: 1.5px solid #b5c4b0;
+  background: #e6eae2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+}
+
+.remember-checkbox:checked + .remember-indicator {
+  background: #1a4731;
+  border-color: #1a4731;
+  box-shadow: 0 0 0 3px rgba(26, 71, 49, 0.12);
+}
+
+.check-icon {
+  width: 11px;
+  height: 11px;
+  stroke: #ffffff;
+  stroke-width: 3;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.18s ease;
+}
+
+.remember-checkbox:checked + .remember-indicator .check-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.remember-text {
+  font-size: 0.84rem;
+  color: #4b5563;
+  font-weight: 400;
+}
+
+/* ---- Sign In Button ---- */
+.btn-signin {
+  width: 100%;
+  height: 52px;
+  border-radius: 12px;
+  background: #1a4731;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.93rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
+  box-shadow: 0 4px 16px rgba(26, 71, 49, 0.32);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-signin::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.btn-signin:hover {
+  background: #133825;
+  box-shadow: 0 6px 24px rgba(26, 71, 49, 0.42);
+  transform: translateY(-1px);
+}
+
+.btn-signin:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(26, 71, 49, 0.25);
+}
+
+.btn-spinner {
+  width: 17px;
+  height: 17px;
+  stroke: #ffffff;
+}
+
+.btn-arrow {
+  width: 17px;
+  height: 17px;
+  stroke: rgba(255,255,255,0.85);
+  transition: transform 0.2s ease;
+}
+
+.btn-signin:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* ---- Divider ---- */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 1.2rem;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(26, 71, 49, 0.1);
+}
+
+.divider-text {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+/* --------------------------------------------------------------------------- */
+/* FORGOT PASSWORD MODAL                                                          */
+/* --------------------------------------------------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 15, 10, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-panel {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+
+.modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.modal-title-icon {
+  width: 18px;
+  height: 18px;
+  stroke: #e5a93b;
+}
+
+.modal-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a4731;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.3rem;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.modal-close-btn:hover {
+  background: rgba(0,0,0,0.06);
+  color: #1a4731;
+}
+
+.modal-close-btn i, .modal-close-btn svg { width: 18px; height: 18px; }
+
+.modal-body-text {
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.65;
+  margin-bottom: 1.1rem;
+}
+
+.reset-success-alert {
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  margin-bottom: 1rem;
+  background: rgba(26, 71, 49, 0.07);
+  border: 1px solid rgba(26, 71, 49, 0.22);
+  color: #1a4731;
+}
+
+.modal-field { margin-bottom: 1.1rem; }
+
+.modal-field-label {
+  display: block;
+  font-size: 0.73rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #6b7280;
+  margin-bottom: 0.45rem;
+}
+
+/* Modal input — no side icon padding needed */
+.modal-field .login-input {
+  padding: 0 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.btn-modal-cancel {
+  padding: 0.55rem 1.2rem;
+  border-radius: 9px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.07);
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-cancel:hover { background: rgba(0,0,0,0.09); color: #1a4731; }
+
+.btn-modal-submit {
+  padding: 0.55rem 1.2rem;
+  border-radius: 9px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  background: #1a4731;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(26, 71, 49, 0.28);
+}
+
+.btn-modal-submit:hover {
+  background: #133825;
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------- */
+/* Utility animations                                                             */
+/* --------------------------------------------------------------------------- */
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  20%, 60%  { transform: translateX(-6px); }
+  40%, 80%  { transform: translateX(6px); }
+}
+
+.shake-animation { animation: shakeError 0.4s ease-in-out; }
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.animate-spin { animation: spin 0.8s linear infinite; }
+
+/* --------------------------------------------------------------------------- */
+/* RESPONSIVE — Tablet (≤ 1024px)                                                */
+/* --------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .login-left-panel {
+    flex: 0 0 52%;
+    clip-path: polygon(0 0, 86% 0, 100% 100%, 0 100%);
+  }
+  .login-right-panel {
+    margin-left: -6%;
+  }
+  .left-content {
+    padding: 2rem 2.25rem;
+  }
+  .login-form-wrapper {
+    max-width: 340px;
+    padding: 0 0.75rem;
+  }
+}
+
+/* --------------------------------------------------------------------------- */
+/* RESPONSIVE — Mobile (≤ 767px): stacked                                        */
+/* --------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  body.login-body {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .login-split-wrapper {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .login-left-panel {
+    flex: none;
+    width: 100%;
+    height: 42vh;
+    min-height: 280px;
+    clip-path: none;
+    z-index: 1;
+  }
+
+  .left-hero {
+    padding-bottom: 2rem;
+  }
+
+  .hero-headline { font-size: 1.85rem; }
+  .hero-description { font-size: 0.8rem; }
+
+  .left-content { padding: 1.5rem; }
+
+  .login-right-panel {
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-height: 58vh;
+    margin-left: 0;
+    padding: 2rem 1.25rem;
+    z-index: 1;
+  }
+
+  .login-form-wrapper {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .login-welcome { font-size: 1.9rem; }
+
+  .right-leaf-tr,
+  .right-leaf-bl {
+    width: 110px;
+    height: 130px;
+  }
+}

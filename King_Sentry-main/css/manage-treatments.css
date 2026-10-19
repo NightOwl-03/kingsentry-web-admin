@@ -1,0 +1,23 @@
+/* =============================================================================
+   KINGSENTRY — MANAGE TREATMENTS PAGE CSS
+   Styles specific to manage-treatments.html
+   ============================================================================= */
+
+/* --------------------------------------------------------------------------- */
+/* Treatment Filter Pill Buttons                                                  */
+/* --------------------------------------------------------------------------- */
+.treatment-filter-btn {
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Remedy Cards                                                                   */
+/* --------------------------------------------------------------------------- */
+#remediesContainer > div {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#remediesContainer > div:hover {
+  box-shadow: 0 8px 24px -4px rgba(15, 33, 25, 0.08);
+}

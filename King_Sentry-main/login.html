@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In | King's Sentry Durian Orchard AI System</title>
+  <meta name="description" content="Secure access to the King's Sentry AI-driven YOLO26 Durian Leaf Disease Detection and Orchard Management System in Davao del Sur.">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            durianGold: '#e5a93b',
+            durianAmber: '#d49324',
+            durianCustard: '#fdf0d5',
+            emeraldDark: '#0d2319',
+            emeraldMid: '#163a2b',
+            leafGreen: '#1a4731',
+            leafMint: '#42b883',
+            leafLight: '#d8f3dc'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="login-body">
+
+  <div id="toastContainer" class="fixed top-6 right-6 z-50 flex flex-col space-y-3 pointer-events-none max-w-sm w-full"></div>
+
+  <div class="login-split-wrapper">
+
+    <section class="login-left-panel" id="orchardPanel" aria-label="Durian Orchard Showcase">
+
+      <div class="orchard-bg" style="background-image: url('assets/durian_orchard.jpg');"></div>
+
+      <div class="orchard-overlay"></div>
+
+      <div class="orchard-vine" aria-hidden="true">
+        <svg viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <path d="M0 80 Q80 40 160 70 Q240 100 320 55 Q380 25 400 40" stroke="rgba(229,169,59,0.25)" stroke-width="1.5" fill="none"/>
+          <path d="M0 100 Q100 60 200 85 Q300 110 400 70" stroke="rgba(229,169,59,0.15)" stroke-width="1" fill="none"/>
+        </svg>
+      </div>
+
+      <div class="left-content">
+
+        <div class="left-top-brand">
+          <div class="brand-icon-sm">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v3"/>
+              <path d="M12 5c-4.5 0-8 3.5-8 8.5 0 4 3 6.5 8 6.5s8-2.5 8-6.5C20 8.5 16.5 5 12 5z"/>
+              <path d="M7 10l2 2"/>
+              <path d="M17 10l-2 2"/>
+              <path d="M12 10v6"/>
+              <path d="M9 15l3 3 3-3"/>
+              <path d="M5 14l2-1"/>
+              <path d="M19 14l-2-1"/>
+            </svg>
+          </div>
+          <div class="brand-text-sm">
+            <span class="brand-name-sm">King's Sentry Access</span>
+            <span class="brand-sub-sm">Sinoron Durian Orchard Sentinel Station</span>
+          </div>
+        </div>
+
+        <div class="left-hero">
+          <div class="hero-badge">
+            <i data-lucide="leaf" class="badge-icon"></i>
+            <span>Smart Monitoring &bull; Healthy Trees &bull; Better Harvests</span>
+          </div>
+
+          <h1 class="hero-headline">
+            <span class="headline-white">Guarding Every Leaf.</span>
+            <span class="headline-gold">Harvesting Pure Gold.</span>
+          </h1>
+
+          <p class="hero-description">
+            Real-time YOLO26 canopy disease intelligence detecting Leaf Spot and Leaf Blight across high-yield durian blocks with millisecond edge precision.
+          </p>
+        </div>
+
+        <div class="left-bottom-spacer"></div>
+
+      </div>
+    </section>
+
+    <section class="login-right-panel" aria-label="Login Form">
+
+      <div class="right-leaf-tr" aria-hidden="true">
+        <svg viewBox="0 0 160 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M155 5 Q110 35 88 85 Q66 135 30 175 Q68 130 92 80 Q116 30 155 5Z" fill="rgba(26,71,49,0.10)"/>
+          <path d="M145 2 Q100 32 78 82 Q56 132 20 172 Q58 127 82 77 Q106 27 145 2Z" fill="rgba(26,71,49,0.06)"/>
+          <path d="M160 30 Q120 52 100 95 Q80 138 55 175 Q78 132 100 89 Q122 46 160 30Z" fill="rgba(229,169,59,0.07)"/>
+          <path d="M155 5 Q95 88 30 175" stroke="rgba(26,71,49,0.12)" stroke-width="1.2" fill="none"/>
+        </svg>
+      </div>
+
+      <div class="right-leaf-bl" aria-hidden="true">
+        <svg viewBox="0 0 160 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 175 Q50 145 72 95 Q94 45 130 5 Q92 50 68 100 Q44 150 5 175Z" fill="rgba(26,71,49,0.10)"/>
+          <path d="M15 178 Q60 148 82 98 Q104 48 140 8 Q102 53 78 103 Q54 153 15 178Z" fill="rgba(26,71,49,0.06)"/>
+          <path d="M5 175 Q65 92 130 5" stroke="rgba(26,71,49,0.12)" stroke-width="1.2" fill="none"/>
+        </svg>
+      </div>
+
+      <div class="login-form-wrapper">
+
+        <div class="login-logo">
+          <div class="login-logo-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v3"/>
+              <path d="M12 5c-4.5 0-8 3.5-8 8.5 0 4 3 6.5 8 6.5s8-2.5 8-6.5C20 8.5 16.5 5 12 5z"/>
+              <path d="M7 10l2 2"/>
+              <path d="M17 10l-2 2"/>
+              <path d="M12 10v6"/>
+              <path d="M9 15l3 3 3-3"/>
+              <path d="M5 14l2-1"/>
+              <path d="M19 14l-2-1"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="login-heading">
+          <h2 class="login-welcome">Welcome</h2>
+          <p class="login-subtext">Log in to your account</p>
+        </div>
+
+        <form id="loginForm" class="login-form" novalidate>
+
+          <div class="input-group" id="emailGroup">
+            <div class="input-field-wrap">
+              <span class="input-icon input-icon--left" aria-hidden="true">
+                <i data-lucide="mail"></i>
+              </span>
+              <input
+                type="email"
+                id="emailInput"
+                name="email"
+                value="aris.evans@kingsentry.ph"
+                placeholder="Email"
+                autocomplete="username"
+                class="login-input"
+                aria-label="Email address"
+              />
+            </div>
+          </div>
+
+          <div class="input-group" id="passwordGroup">
+            <div class="input-field-wrap">
+              <span class="input-icon input-icon--left" aria-hidden="true">
+                <i data-lucide="lock"></i>
+              </span>
+              <input
+                type="password"
+                id="passwordInput"
+                name="password"
+                value="Password2026!"
+                placeholder="Password"
+                autocomplete="current-password"
+                class="login-input login-input--password"
+                aria-label="Password"
+              />
+              <button
+                type="button"
+                id="togglePasswordBtn"
+                class="input-icon input-icon--right input-icon--btn"
+                aria-label="Toggle password visibility"
+              >
+                <i id="passwordEyeIcon" data-lucide="eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="forgot-row">
+            <button type="button" id="forgotPasswordLink" class="forgot-link">
+              Forgot Password?
+            </button>
+          </div>
+
+          <div class="remember-row">
+            <label class="remember-label" for="rememberCheckbox">
+              <input
+                type="checkbox"
+                id="rememberCheckbox"
+                checked
+                class="remember-checkbox"
+                aria-label="Remember this terminal device"
+              />
+              <span class="remember-indicator" aria-hidden="true">
+                <i data-lucide="check" class="check-icon"></i>
+              </span>
+              <span class="remember-text">Remember this terminal device</span>
+            </label>
+          </div>
+
+          <button type="submit" id="submitBtn" class="btn-signin">
+            <i id="submitSpinner" data-lucide="loader-2" class="btn-spinner hidden" aria-hidden="true"></i>
+            <span id="submitBtnText">Sign In to Orchard Station</span>
+            <i data-lucide="arrow-right" class="btn-arrow" aria-hidden="true"></i>
+          </button>
+
+        </form>
+
+        <div class="login-divider" aria-hidden="true">
+          <span class="divider-line"></span>
+          <span class="divider-text">or</span>
+          <span class="divider-line"></span>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <div id="forgotModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="forgotModalTitle">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <i data-lucide="key-round" class="modal-title-icon" aria-hidden="true"></i>
+          <h3 id="forgotModalTitle" class="modal-title">Reset Terminal Password</h3>
+        </div>
+        <button id="closeForgotModalBtn" class="modal-close-btn" aria-label="Close modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <p class="modal-body-text">
+        Enter your registered King's Sentry staff email address to generate an emergency reset credential via the Sinoron Orchard IT Dispatch.
+      </p>
+      <div id="resetSuccessAlert" class="reset-success-alert hidden"></div>
+      <div class="modal-field">
+        <label for="resetEmailInput" class="modal-field-label">Staff Email</label>
+        <input
+          type="email"
+          id="resetEmailInput"
+          placeholder="aris.evans@kingsentry.ph"
+          class="login-input"
+          aria-label="Staff email for password reset"
+        />
+      </div>
+      <div class="modal-actions">
+        <button type="button" onclick="document.getElementById('forgotModal').classList.add('hidden')" class="btn-modal-cancel">
+          Cancel
+        </button>
+        <button type="button" id="resetPassSubmitBtn" class="btn-modal-submit">
+          Send Reset Link
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shared-state.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

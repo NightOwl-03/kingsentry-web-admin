@@ -1,0 +1,2123 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>King's Sentry | Durian Leaf Disease Detection & Orchard Management System</title>
+  <meta name="description" content="AI-driven YOLO26 Durian Leaf Disease Detection and Precision Orchard Management System in Barangay Sinoron, Santa Cruz, Davao del Sur.">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emeraldDark: '#0d2319',
+            emeraldMid: '#163a2b',
+            leafGreen: '#235940',
+            leafMint: '#42b883',
+            leafLight: '#d8f3dc',
+            warningGold: '#d4a373',
+            alertRed: '#bc4749',
+            cardBg: '#ffffff',
+            softSlate: '#f4f7f5'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif']
+          },
+          boxShadow: {
+            'glow-mint': '0 0 20px -3px rgba(66, 184, 131, 0.25)',
+            'glow-gold': '0 0 20px -3px rgba(212, 163, 115, 0.25)',
+            'glow-red': '0 0 20px -3px rgba(188, 71, 73, 0.25)',
+            'card': '0 4px 20px -2px rgba(15, 33, 25, 0.05), 0 2px 6px -1px rgba(15, 33, 25, 0.03)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background: #f0f4f2;
+      background-image: radial-gradient(at 0% 0%, rgba(35, 89, 64, 0.06) 0px, transparent 50%),
+                        radial-gradient(at 100% 100%, rgba(66, 184, 131, 0.05) 0px, transparent 50%);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+    .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #e9ecef;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #b7c4bd;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #84998d;
+    }
+
+    /* Collapsible Dashboard Panel Transitions */
+    .dashboard-panel-content {
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.3s ease,
+                  margin 0.3s ease;
+      overflow: hidden;
+    }
+
+    .dashboard-panel.is-collapsed .dashboard-panel-content {
+      max-height: 0 !important;
+      opacity: 0;
+      margin-top: 0 !important;
+      pointer-events: none;
+    }
+
+    .dashboard-panel.is-expanded .dashboard-panel-content {
+      max-height: 2000px !important;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Hover to show mode: when collapsed and hovered, expand temporarily */
+    .hover-expand-enabled .dashboard-panel.is-collapsed:hover .dashboard-panel-content {
+      max-height: 2000px !important;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Hover hint indicator */
+    .dashboard-panel .hover-indicator {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .hover-expand-enabled .dashboard-panel.is-collapsed:hover .hover-indicator {
+      opacity: 1;
+    }
+
+    /* Canvas styling */
+    .bbox-canvas-container {
+      background: radial-gradient(circle at center, #1b3d2f 0%, #0c1c15 100%);
+    }
+
+    /* Left Sidebar Navigation Styling */
+    #sidebar {
+      background-color: #142e1e;
+    }
+    #sidebar .nav-tab-btn {
+      transition: all 0.15s ease-in-out;
+    }
+    #sidebar .nav-tab-btn.active {
+      background-color: #2e7d32 !important;
+      color: #ffffff !important;
+    }
+    #sidebar .nav-tab-btn:not(.active):hover {
+      background-color: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased flex min-h-screen selection:bg-leafGreen selection:text-white bg-[#f8fafc]">
+
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity"></div>
+
+  <aside id="sidebar" class="fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-[#142e1e] flex flex-col justify-between shrink-0 h-screen overflow-y-auto select-none transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 border-r border-emerald-950/40 shadow-2xl lg:shadow-none">
+    
+    <div>
+      <div class="px-6 pt-7 pb-6 flex items-center justify-between">
+        <h1 class="text-xl font-display font-bold text-[#8dc572] tracking-tight cursor-pointer select-none" onclick="switchTab('tab-dashboard')">
+          King's Sentry Admin
+        </h1>
+        <button id="closeSidebarMobileBtn" class="lg:hidden text-[#b0c7b3] hover:text-white p-1 rounded-lg hover:bg-white/10" aria-label="Close Navigation">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <nav class="space-y-0.5" id="navTabs">
+        
+        <button data-tab="tab-dashboard" class="nav-tab-btn active w-full flex items-center px-6 py-3.5 font-medium text-sm transition-colors text-white bg-[#2e7d32] text-left">
+          <span class="sidebar-text">Dashboard</span>
+        </button>
+
+        <button data-tab="tab-scanner" class="nav-tab-btn w-full flex items-center px-6 py-3.5 font-medium text-sm transition-colors text-[#b0c7b3] hover:text-white hover:bg-white/5 bg-transparent text-left">
+          <span class="sidebar-text">Photo Repository</span>
+        </button>
+
+        <button data-tab="tab-treatment" class="nav-tab-btn w-full flex items-center px-6 py-3.5 font-medium text-sm transition-colors text-[#b0c7b3] hover:text-white hover:bg-white/5 bg-transparent text-left">
+          <span class="sidebar-text">Manage Treatments</span>
+        </button>
+
+        <button data-tab="tab-users" class="nav-tab-btn w-full flex items-center px-6 py-3.5 font-medium text-sm transition-colors text-[#b0c7b3] hover:text-white hover:bg-white/5 bg-transparent text-left">
+          <span class="sidebar-text">User Accounts</span>
+          <span id="sidebarUserCount" class="hidden"></span>
+        </button>
+
+      </nav>
+    </div>
+
+    <div class="p-6">
+      <button id="logoutBtn" class="text-sm font-medium text-[#e57373] hover:text-red-300 transition-colors flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0 text-left">
+        <span class="sidebar-text">Logout</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0 min-h-screen bg-[#f8fafc] overflow-y-auto">
+
+    <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3 flex items-center justify-between shadow-xs">
+      
+      <div class="flex items-center space-x-3">
+        <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" aria-label="Open Navigation">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div class="flex items-center text-xs text-slate-600 font-medium space-x-2">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-warningGold shrink-0"></i>
+          <span class="truncate font-semibold text-slate-800">Barangay Sinoron, Santa Cruz</span>
+          <span class="hidden md:inline text-[11px] text-slate-500 font-medium">Davao del Sur</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        
+        <button id="toggleHoverModeBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-all" title="Toggle hover-to-show dashboard behavior">
+          <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-leafGreen"></i>
+          <span class="hidden sm:inline">Hover-to-Show:</span>
+          <span id="hoverModeStatus" class="font-bold text-leafGreen">ON</span>
+        </button>
+
+        <button id="quickSimulateBtn" class="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-xs font-semibold text-white shadow-xs transition-all active:scale-95">
+          <i data-lucide="scan-line" class="w-4 h-4 text-leafMint"></i>
+          <span class="hidden xs:inline">Simulate Scan</span>
+        </button>
+
+        <div class="hidden xl:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-800">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-leafMint opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-leafGreen"></span>
+          </span>
+          <span class="font-medium">Sinoron Edge Node</span>
+        </div>
+
+        <div class="flex items-center space-x-2.5 pl-2 border-l border-slate-200">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-leafGreen to-emerald-900 flex items-center justify-center font-bold text-xs text-white shadow-xs">
+            AT
+          </div>
+          <div class="hidden sm:block text-left">
+            <div class="text-xs font-bold text-slate-800 leading-tight">Dr. Aris Evans</div>
+            <div class="text-[10px] text-slate-500 font-semibold uppercase">Chief Agronomist</div>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1500px] w-full mx-auto space-y-6">
+
+      <section id="tab-dashboard" class="tab-view space-y-6">
+
+        <div class="bg-white rounded-3xl p-5 shadow-card border border-slate-200/80 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl sm:text-2xl font-display font-extrabold text-slate-900">Mobile Scans Dashboard</h2>
+              <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">Interactive Modules</span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+              Each dashboard is separated below. <span class="text-leafGreen font-semibold">Hover over collapsed panels to quickly preview or click to pin open/close.</span>
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 text-xs">
+              <button class="dash-isolate-btn active px-3 py-1.5 rounded-xl font-bold transition-all bg-white text-emerald-950 shadow-sm" data-target="all">
+                All Dashboards
+              </button>
+              <button class="dash-isolate-btn px-3 py-1.5 rounded-xl font-medium text-slate-600 hover:text-slate-900 transition-all" data-target="panel-kpi">
+                KPIs
+              </button>
+              <button class="dash-isolate-btn px-3 py-1.5 rounded-xl font-medium text-slate-600 hover:text-slate-900 transition-all" data-target="panel-diagnostics">
+                Diagnostics
+              </button>
+              <button class="dash-isolate-btn px-3 py-1.5 rounded-xl font-medium text-slate-600 hover:text-slate-900 transition-all" data-target="panel-zonal">
+                Zonal Trends
+              </button>
+              <button class="dash-isolate-btn px-3 py-1.5 rounded-xl font-medium text-slate-600 hover:text-slate-900 transition-all" data-target="panel-livefeed">
+                Live Feed
+              </button>
+            </div>
+
+            <div class="flex items-center space-x-1">
+              <button id="btnExpandAllDashboards" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors" title="Expand All Dashboards">
+                <i data-lucide="chevrons-down" class="w-4 h-4"></i>
+              </button>
+              <button id="btnCollapseAllDashboards" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors" title="Collapse All Dashboards">
+                <i data-lucide="chevrons-up" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-kpi" class="dashboard-panel is-expanded bg-white rounded-3xl shadow-card border border-slate-200/80 transition-all hover:border-emerald-700/40">
+          
+          <div class="dashboard-panel-header px-6 py-4 flex items-center justify-between cursor-pointer border-b border-slate-100 select-none bg-gradient-to-r from-slate-50/50 to-white rounded-t-3xl" onclick="togglePanel('panel-kpi')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-2xl bg-emerald-50 text-leafGreen flex items-center justify-center font-bold">
+                <i data-lucide="gauge" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-display font-bold text-base text-slate-900">Dashboard 1: Executive KPI</h3>
+                  <span class="hover-indicator text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Hovering Preview</span>
+                </div>
+                <p class="text-xs text-slate-400">Aggregated detection volumes and Sinoron microclimate telemetry</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <span class="text-xs font-semibold text-slate-400 hidden sm:inline">Click to Pin / Toggle</span>
+              <button class="panel-toggle-btn w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-transform duration-300" aria-label="Toggle Panel">
+                <i data-lucide="chevron-up" class="w-4 h-4 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-panel-content p-6 space-y-6">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+              
+              <div class="p-5 rounded-2xl bg-white border border-slate-200/90 border-l-4 border-l-[#2e7d32] shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-2.5">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Leaf Scans Received</span>
+                  <div class="w-8 h-8 rounded-xl bg-emerald-50 text-[#2e7d32] flex items-center justify-center">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span id="kpiTotalScans" class="text-3xl font-display font-extrabold text-slate-900">1,842</span>
+                  <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">+14.2%</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Processed across 4 farm zones</p>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                  <div class="bg-[#2e7d32] h-full rounded-full" style="width: 100%"></div>
+                </div>
+              </div>
+
+              <div class="p-5 rounded-2xl bg-white border border-slate-200/90 border-l-4 border-l-[#bc4749] shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-2.5">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-500">High-Risk Infections</span>
+                  <div class="w-8 h-8 rounded-xl bg-rose-50 text-[#bc4749] flex items-center justify-center">
+                    <i data-lucide="flame" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span id="kpiLeafBlight" class="text-3xl font-display font-extrabold text-[#bc4749]">156</span>
+                  <span id="kpiLeafBlightPct" class="text-xs font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full">8.5%</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Phytophthora acute spread alerts</p>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                  <div id="kpiLeafBlightBar" class="bg-[#bc4749] h-full rounded-full" style="width: 8.5%"></div>
+                </div>
+              </div>
+
+              <div class="p-5 rounded-2xl bg-white border border-slate-200/90 border-l-4 border-l-[#f57c00] shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-2.5">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Leaf Spot Cases</span>
+                  <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span id="kpiLeafSpot" class="text-3xl font-display font-extrabold text-amber-800">268</span>
+                  <span id="kpiLeafSpotPct" class="text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">14.5%</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Cercospora & Algal spot alerts</p>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                  <div id="kpiLeafSpotBar" class="bg-[#f57c00] h-full rounded-full" style="width: 14.5%"></div>
+                </div>
+              </div>
+
+              <div class="p-5 rounded-2xl bg-white border border-slate-200/90 border-l-4 border-l-emerald-600 shadow-sm hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-2.5">
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Healthy Canopy Rate</span>
+                  <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                  </div>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span id="kpiHealthy" class="text-3xl font-display font-extrabold text-emerald-800">1,418</span>
+                  <span id="kpiHealthyPct" class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">77.0%</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Canopy threshold: > 75% target</p>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                  <div id="kpiHealthyBar" class="bg-emerald-600 h-full rounded-full" style="width: 77%"></div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <div id="panel-diagnostics" class="dashboard-panel is-expanded bg-white rounded-3xl shadow-card border border-slate-200/80 transition-all hover:border-emerald-700/40">
+          
+          <div class="dashboard-panel-header px-6 py-4 flex items-center justify-between cursor-pointer border-b border-slate-100 select-none bg-gradient-to-r from-slate-50/50 to-white rounded-t-3xl" onclick="togglePanel('panel-diagnostics')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-2xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-display font-bold text-base text-slate-900">Dashboard 2: Canopy Pathology & Diagnosis Distribution</h3>
+                  <span class="hover-indicator text-[11px] bg-teal-100 text-teal-800 font-bold px-2 py-0.5 rounded-full">Hovering Preview</span>
+                </div>
+                <p class="text-xs text-slate-400">Class balance ratio between Healthy, Leaf Spot, and Leaf Blight</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <span class="text-xs font-semibold text-slate-400 hidden sm:inline">Click to Pin / Toggle</span>
+              <button class="panel-toggle-btn w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-transform duration-300" aria-label="Toggle Panel">
+                <i data-lucide="chevron-up" class="w-4 h-4 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-panel-content p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              
+              <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
+                <div class="relative h-64 w-64 flex items-center justify-center">
+                  <canvas id="diseaseDoughnutChart"></canvas>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span class="text-xs text-slate-400 font-semibold uppercase">Canopy</span>
+                    <span id="centerHealthPct" class="text-2xl font-display font-extrabold text-[#2d6a4f]">77%</span>
+                    <span class="text-[10px] text-slate-400">Healthy</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lg:col-span-7 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                  <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/60">
+                    <div class="flex items-center justify-center space-x-1.5 mb-1">
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#2d6a4f]"></span>
+                      <span class="font-bold text-xs text-slate-800">Healthy Leaf</span>
+                    </div>
+                    <div id="legendHealthy" class="text-xl font-display font-extrabold text-[#2d6a4f]">77.0%</div>
+                    <div class="text-[11px] text-slate-500">1,418 verified leaves</div>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/60">
+                    <div class="flex items-center justify-center space-x-1.5 mb-1">
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#d4a373]"></span>
+                      <span class="font-bold text-xs text-slate-800">Leaf Spot</span>
+                    </div>
+                    <div id="legendSpot" class="text-xl font-display font-extrabold text-amber-700">14.5%</div>
+                    <div class="text-[11px] text-slate-500">268 active lesions</div>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl bg-rose-50/70 border border-rose-200/60">
+                    <div class="flex items-center justify-center space-x-1.5 mb-1">
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#bc4749]"></span>
+                      <span class="font-bold text-xs text-slate-800">Leaf Blight</span>
+                    </div>
+                    <div id="legendBlight" class="text-xl font-display font-extrabold text-[#bc4749]">8.5%</div>
+                    <div class="text-[11px] text-slate-500">156 outbreak clusters</div>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
+                  <div class="font-bold text-slate-800 mb-1 flex items-center">
+                    <i data-lucide="microscope" class="w-4 h-4 mr-1.5 text-leafGreen"></i>
+                    Diagnostic Interpretation:
+                  </div>
+                  <p>
+                    Leaf Spot remains manageable across slopes, but Leaf Blight (Phytophthora) is concentrated near the Sinoron river line. Routine protective copper sprays and trunk phosphite injections are recommended before forecasted rainfall.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <div id="panel-zonal" class="dashboard-panel is-expanded bg-white rounded-3xl shadow-card border border-slate-200/80 transition-all hover:border-emerald-700/40">
+          
+          <div class="dashboard-panel-header px-6 py-4 flex items-center justify-between cursor-pointer border-b border-slate-100 select-none bg-gradient-to-r from-slate-50/50 to-white rounded-t-3xl" onclick="togglePanel('panel-zonal')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-display font-bold text-base text-slate-900">Dashboard 3: Zone-by-Zone Disease Incidence</h3>
+                  <span class="hover-indicator text-[11px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Hovering Preview</span>
+                </div>
+                <p class="text-xs text-slate-400">Comparison across Zone A (Upper Slope), B (Riverbed), C (Ridge), D (Nursery)</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <span class="text-xs font-semibold text-slate-400 hidden sm:inline">Click to Pin / Toggle</span>
+              <button class="panel-toggle-btn w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-transform duration-300" aria-label="Toggle Panel">
+                <i data-lucide="chevron-up" class="w-4 h-4 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-panel-content p-6 space-y-4">
+            <div class="h-64 sm:h-72 w-full">
+              <canvas id="zoneBarLineChart"></canvas>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
+              <div class="flex items-center space-x-4">
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#2d6a4f] mr-1.5"></span> Healthy</span>
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#d4a373] mr-1.5"></span> Leaf Spot (Warning)</span>
+                <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-[#bc4749] mr-1.5"></span> Leaf Blight (Alert)</span>
+              </div>
+              <span class="text-slate-400 font-medium">Zone B (River Basin) exhibits highest humidity and fungal load</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div id="panel-livefeed" class="dashboard-panel is-expanded bg-white rounded-3xl shadow-card border border-slate-200/80 transition-all hover:border-emerald-700/40">
+          
+          <div class="dashboard-panel-header px-6 py-4 flex items-center justify-between cursor-pointer border-b border-slate-100 select-none bg-gradient-to-r from-slate-50/50 to-white rounded-t-3xl" onclick="togglePanel('panel-livefeed')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-2xl bg-blue-50 text-blue-800 flex items-center justify-center font-bold">
+                <i data-lucide="radio" class="w-5 h-5 animate-pulse"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-display font-bold text-base text-slate-900">Recent Mobile Photo Uploads</h3>
+                  <span class="hover-indicator text-[11px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">Hovering Preview</span>
+                </div>
+                <p class="text-xs text-slate-400">Field mobile leaf photo uploads and edge inferences</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <span class="text-xs font-semibold text-slate-400 hidden sm:inline">Click to Pin / Toggle</span>
+              <button class="panel-toggle-btn w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-transform duration-300" aria-label="Toggle Panel">
+                <i data-lucide="chevron-up" class="w-4 h-4 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="dashboard-panel-content p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs sm:text-sm">
+                <thead class="bg-slate-50/80 text-slate-500 font-bold uppercase text-[11px] tracking-wider border-b border-slate-100">
+                  <tr>
+                    <th class="py-3 px-4">Scan ID</th>
+                    <th class="py-3 px-4">Farm Zone & Tree</th>
+                    <th class="py-3 px-4">Detected Class</th>
+                    <th class="py-3 px-4">Confidence</th>
+                    <th class="py-3 px-4">Timestamp</th>
+                    <th class="py-3 px-4 text-right">Inspection Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardRecentScansBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span class="text-slate-400">Displaying most recent inferences transmitted from edge nodes.</span>
+              <button onclick="switchTab('tab-scanner')" class="font-bold text-leafGreen hover:text-emerald-800 flex items-center space-x-1">
+                <span>Open Full Mobile Scan Monitor</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <section id="tab-scanner" class="tab-view space-y-6 hidden">
+
+        <div class="bg-white p-6 rounded-3xl shadow-card border border-slate-200/80 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-xl sm:text-2xl font-display font-extrabold text-slate-900">Mobile Scan Monitor</h2>
+              <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">YOLO26 Edge-CV</span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              Field telemetry, spatial coordinates, and real-time bounding box annotations from Barangay Sinoron.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <select id="filterZone" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-leafGreen">
+              <option value="ALL">All Zones</option>
+              <option value="Zone A - Upper Slope">Zone A - Upper Slope</option>
+              <option value="Zone B - River Basin">Zone B - River Basin</option>
+              <option value="Zone C - Central Ridge">Zone C - Central Ridge</option>
+              <option value="Zone D - Nursery Block">Zone D - Nursery Block</option>
+            </select>
+
+            <select id="filterClass" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-leafGreen">
+              <option value="ALL">All Diagnoses</option>
+              <option value="Healthy">Healthy Only</option>
+              <option value="Leaf Spot">Leaf Spot (Warning)</option>
+              <option value="Leaf Blight">Leaf Blight (Alert)</option>
+            </select>
+
+            <button id="btnNewScan" class="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Simulate Scan</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-card border border-slate-200/80 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider border-b border-slate-100">
+                <tr>
+                  <th class="py-3.5 px-4">Scan Identifier</th>
+                  <th class="py-3.5 px-4">Farm Zone & Tree</th>
+                  <th class="py-3.5 px-4">Detected Disease</th>
+                  <th class="py-3.5 px-4">Confidence Score</th>
+                  <th class="py-3.5 px-4">Inference Latency</th>
+                  <th class="py-3.5 px-4">Timestamp</th>
+                  <th class="py-3.5 px-4 text-center">BBox Inspection</th>
+                </tr>
+              </thead>
+              <tbody id="scanTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <div>
+              Showing <span id="displayedScanCount" class="font-bold text-slate-800">0</span> telemetry events
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-slate-600">Model: YOLO26-Nano (TensorRT FP16)</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <section id="tab-treatment" class="tab-view space-y-6 hidden">
+
+        <div class="bg-white p-6 rounded-3xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-xl sm:text-2xl font-display font-extrabold text-slate-900">Treatment & Prevention Hub</h2>
+              <span class="bg-amber-100 text-amber-900 text-xs font-bold px-2.5 py-0.5 rounded-full">2026 Season Formulary</span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              Standardized fungicide remedies, bio-control rotation, and application guidelines for Barangay Sinoron.
+            </p>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <button id="openAddRemedyBtn" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow transition-all active:scale-95">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Add / Edit Remedy</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 overflow-x-auto pb-1">
+          <button class="treatment-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#1b4332] text-white shadow-sm" data-filter="ALL">
+            All Protocols (<span id="countAllRemedies">0</span>)
+          </button>
+          <button class="treatment-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200" data-filter="Leaf Spot">
+            Leaf Spot Protocols (<span id="countSpotRemedies">0</span>)
+          </button>
+          <button class="treatment-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200" data-filter="Leaf Blight">
+            Leaf Blight Outbreaks (<span id="countBlightRemedies">0</span>)
+          </button>
+        </div>
+
+        <div id="remediesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        </div>
+
+      </section>
+
+      <section id="tab-users" class="tab-view space-y-6 hidden">
+
+        <div class="bg-white p-6 rounded-3xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-xl sm:text-2xl font-display font-extrabold text-slate-900">User Accounts & Roles</h2>
+              <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-0.5 rounded-full">RBAC Controlled</span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              Manage field technicians, certified agronomists, and system administrators.
+            </p>
+          </div>
+
+          <button id="openRegisterUserBtn" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow transition-all active:scale-95">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Register New User</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+              <i data-lucide="shield" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400 font-bold uppercase">Administrator</div>
+              <div id="adminCount" class="text-lg font-extrabold text-slate-800">2 Accounts</div>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
+              <i data-lucide="microscope" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400 font-bold uppercase">Agronomists</div>
+              <div id="agronomistCount" class="text-lg font-extrabold text-slate-800">2 Accounts</div>
+            </div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+              <i data-lucide="tractor" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400 font-bold uppercase">Field Farmers</div>
+              <div id="farmerCount" class="text-lg font-extrabold text-slate-800">1 Account</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-card border border-slate-200/80 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider border-b border-slate-100">
+                <tr>
+                  <th class="py-3.5 px-4">Staff Member</th>
+                  <th class="py-3.5 px-4">Role Badge</th>
+                  <th class="py-3.5 px-4">Assigned Farm Zone</th>
+                  <th class="py-3.5 px-4">Status</th>
+                  <th class="py-3.5 px-4">Registration Date</th>
+                  <th class="py-3.5 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <div id="bboxModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-4xl w-full overflow-hidden transition-all">
+      
+      <div class="px-6 py-4 bg-[#0d2319] text-white flex items-center justify-between border-b border-emerald-900/60">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-leafGreen flex items-center justify-center text-leafMint">
+            <i data-lucide="scan" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-base sm:text-lg text-white" id="modalScanIdTitle">YOLO26 Bounding Box Inspector</h3>
+            <p class="text-xs text-emerald-200/80" id="modalSubTitle">Barangay Sinoron Field Edge Scan</p>
+          </div>
+        </div>
+        <button id="closeBboxModal" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition-colors" aria-label="Close modal">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-8 flex flex-col items-center justify-center">
+          <div class="w-full relative rounded-2xl overflow-hidden shadow-inner border border-slate-800 bbox-canvas-container flex items-center justify-center p-2">
+            <canvas id="bboxCanvas" width="560" height="380" class="max-w-full h-auto rounded-xl shadow-lg"></canvas>
+            
+            <div class="absolute top-4 left-4 bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/60 text-[11px] text-slate-300 font-mono flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>YOLO26-CV • 640x640 Input</span>
+            </div>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between w-full text-xs text-slate-500 px-1">
+            <div class="flex items-center space-x-3">
+              <button id="toggleBboxBtn" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">
+                Toggle Overlay BBox
+              </button>
+              <button id="toggleVeinBtn" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">
+                Toggle Vein Contrast
+              </button>
+            </div>
+            <span class="text-[11px] text-slate-400">Resolution: 560 × 380 px</span>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4 flex flex-col justify-between space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Diagnostic Classification</div>
+            <div id="modalDiagnosisBadge" class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold mb-3">
+            </div>
+
+            <div class="space-y-2.5 text-xs text-slate-600">
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Model Confidence:</span>
+                <span id="modalConfidence" class="font-bold text-slate-800">97.8%</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Farm Zone:</span>
+                <span id="modalZone" class="font-semibold text-slate-800">Zone B - River Basin</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">BBox Coordinates:</span>
+                <span id="modalCoords" class="font-mono text-[11px] text-slate-700">[120, 95, 230, 180]</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Inference Speed:</span>
+                <span id="modalLatency" class="font-mono text-emerald-700 font-semibold">13.2 ms</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">GPS Coordinates:</span>
+                <span class="font-mono text-[11px] text-slate-700">6.8124° N, 125.4021° E</span>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 rounded-xl bg-white border border-slate-200 text-xs">
+              <div class="font-bold text-slate-800 mb-1 flex items-center">
+                <i data-lucide="info" class="w-3.5 h-3.5 mr-1 text-leafGreen"></i> Agronomic Advisory
+              </div>
+              <p id="modalRemedyRecommendation" class="text-slate-600 leading-relaxed text-[11px]">
+                Target tissue shows active pathogen lesion. Recommend immediate isolation of irrigation branch and application of copper formulation.
+              </p>
+            </div>
+          </div>
+
+          <button id="closeBboxModalBottom" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow">
+            Dismiss Inspector
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="remedyModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden transition-all">
+      
+      <div class="px-6 py-4 bg-[#0d2319] text-white flex items-center justify-between border-b border-emerald-900/60">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="flask-conical" class="w-5 h-5 text-leafMint"></i>
+          <h3 class="font-display font-bold text-base sm:text-lg text-white">Add Treatment Protocol</h3>
+        </div>
+        <button id="closeRemedyModal" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition-colors" aria-label="Close modal">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="remedyForm" class="p-6 space-y-4 text-xs sm:text-sm">
+        
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyTargetDisease">
+            Target Disease Class *
+          </label>
+          <select id="remedyTargetDisease" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+            <option value="Leaf Spot">Leaf Spot (Warning Gold - Cercospora/Algal)</option>
+            <option value="Leaf Blight">Leaf Blight (Alert Red - Phytophthora/Rhizoctonia)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyName">
+            Fungicide / Remedy Trade Name *
+          </label>
+          <input type="text" id="remedyName" required placeholder="e.g. Copper Oxychloride 50 WP or Ridomil Gold" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyActiveIngredient">
+            Active Ingredient & Mode of Action
+          </label>
+          <input type="text" id="remedyActiveIngredient" placeholder="e.g. 50% Copper Hydroxide (FRAC M01 Protective)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyYear">
+            Active Effective Year *
+          </label>
+          <input type="number" id="remedyYear" required value="2026" min="2024" max="2035" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyGuidelines">
+            Application Guidelines & Dosage *
+          </label>
+          <textarea id="remedyGuidelines" required rows="3" placeholder="Specify dilution rate (e.g. 2.5g per Liter of water), foliar misting interval (every 14 days), and pre-harvest interval..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-100">
+          <button type="button" id="cancelRemedyBtn" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition-colors">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white font-bold transition-colors shadow">
+            Save Protocol to Formulary
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <div id="userModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden transition-all">
+      
+      <div class="px-6 py-4 bg-[#0d2319] text-white flex items-center justify-between border-b border-emerald-900/60">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="user-plus" class="w-5 h-5 text-leafMint"></i>
+          <h3 class="font-display font-bold text-base sm:text-lg text-white">Register Sentry Personnel</h3>
+        </div>
+        <button id="closeUserModal" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition-colors" aria-label="Close modal">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="userForm" class="p-6 space-y-4 text-xs sm:text-sm">
+        
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userFullName">
+            Full Name *
+          </label>
+          <input type="text" id="userFullName" required placeholder="e.g. Maria Clara Santos" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userEmail">
+            Work Email Address *
+          </label>
+          <input type="email" id="userEmail" required placeholder="mc.santos@kingsentry.ph" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userRole">
+            System Privilege Role *
+          </label>
+          <select id="userRole" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+            <option value="AGRONOMIST">AGRONOMIST (Pathology validation & remedies)</option>
+            <option value="FARMER">FARMER (Mobile edge scanning & field logging)</option>
+            <option value="ADMIN">ADMIN (Full system access & configuration)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userZone">
+            Assigned Farm Zone *
+          </label>
+          <select id="userZone" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+            <option value="All Orchard Zones">All Orchard Zones (General)</option>
+            <option value="Zone A - Upper Slope">Zone A - Upper Slope</option>
+            <option value="Zone B - River Basin">Zone B - River Basin</option>
+            <option value="Zone C - Central Ridge">Zone C - Central Ridge</option>
+            <option value="Zone D - Nursery Block">Zone D - Nursery Block</option>
+          </select>
+        </div>
+
+        <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-100">
+          <button type="button" id="cancelUserBtn" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition-colors">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white font-bold transition-colors shadow">
+            Create Account
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script>
+    const state = {
+      hoverModeActive: true,
+      kpis: {
+        total: 1842,
+        healthy: 1418,
+        leafSpot: 268,
+        leafBlight: 156
+      },
+      zones: [
+        'Zone A - Upper Slope',
+        'Zone B - River Basin',
+        'Zone C - Central Ridge',
+        'Zone D - Nursery Block'
+      ],
+      scans: [
+        {
+          id: "KS-2026-0892",
+          zone: "Zone B - River Basin",
+          treeId: "Tree #241 (Puyat)",
+          detectedClass: "Leaf Blight",
+          confidence: 96.4,
+          latency: "12.8 ms",
+          timestamp: "2 mins ago",
+          bbox: { x: 135, y: 110, w: 230, h: 165 },
+          notes: "Severe necrotic water-soaked lesion along main lateral vein. High risk of spread due to riverbed humidity."
+        },
+        {
+          id: "KS-2026-0891",
+          zone: "Zone A - Upper Slope",
+          treeId: "Tree #108 (Duyaya)",
+          detectedClass: "Leaf Spot",
+          confidence: 94.2,
+          latency: "14.1 ms",
+          timestamp: "7 mins ago",
+          bbox: { x: 190, y: 140, w: 150, h: 130 },
+          notes: "Target-board circular chlorotic spot. Cercospora foveolata symptoms."
+        },
+        {
+          id: "KS-2026-0890",
+          zone: "Zone C - Central Ridge",
+          treeId: "Tree #312 (Puyat)",
+          detectedClass: "Healthy",
+          confidence: 98.7,
+          latency: "11.9 ms",
+          timestamp: "18 mins ago",
+          bbox: { x: 90, y: 70, w: 380, h: 240 },
+          notes: "Vibrant dark-green leaf lamina without necrotic lesions or chlorosis."
+        },
+        {
+          id: "KS-2026-0889",
+          zone: "Zone B - River Basin",
+          treeId: "Tree #219 (Arancillo)",
+          detectedClass: "Leaf Blight",
+          confidence: 97.1,
+          latency: "13.4 ms",
+          timestamp: "32 mins ago",
+          bbox: { x: 160, y: 120, w: 210, h: 180 },
+          notes: "Phytophthora palmivora foliar blight manifesting near lower drip line."
+        },
+        {
+          id: "KS-2026-0888",
+          zone: "Zone D - Nursery Block",
+          treeId: "Sapling #044 (Puyat Graft)",
+          detectedClass: "Leaf Spot",
+          confidence: 91.8,
+          latency: "15.0 ms",
+          timestamp: "45 mins ago",
+          bbox: { x: 210, y: 160, w: 120, h: 110 },
+          notes: "Algal leaf spot (Cephaleuros virescens) observed on upper cuticle."
+        },
+        {
+          id: "KS-2026-0887",
+          zone: "Zone A - Upper Slope",
+          treeId: "Tree #094 (Puyat)",
+          detectedClass: "Healthy",
+          confidence: 99.1,
+          latency: "12.2 ms",
+          timestamp: "1 hr ago",
+          bbox: { x: 80, y: 65, w: 400, h: 250 },
+          notes: "Optimal foliar health; glossy cuticle with uniform chlorophyll density."
+        }
+      ],
+      remedies: [
+        {
+          id: "REM-01",
+          targetDisease: "Leaf Blight",
+          name: "Ridomil Gold MZ (Metalaxyl-M + Mancozeb)",
+          activeIngredient: "40g/kg Metalaxyl-M + 640g/kg Mancozeb (FRAC 4 + M03)",
+          guidelines: "Foliar spray at 2.5g per Liter of clean water. Ensure full coverage on both adaxial and abaxial leaf surfaces. Apply immediately following heavy monsoon rain; re-spray after 14 days if lesion margins remain moist.",
+          year: 2026,
+          category: "Systemic Curative"
+        },
+        {
+          id: "REM-02",
+          targetDisease: "Leaf Blight",
+          name: "Agri-Fos 400 (Mono- & Di-Potassium Phosphonate)",
+          activeIngredient: "400 g/L Phosphorous Acid equivalent (Systemic Acquired Resistance)",
+          guidelines: "Apply as trunk injection or 5 mL/L foliar spray during high-risk vegetative flushing. Induces host plant phytoalexin defense against Phytophthora palmivora.",
+          year: 2026,
+          category: "Systemic SAR Inducer"
+        },
+        {
+          id: "REM-03",
+          targetDisease: "Leaf Spot",
+          name: "Copper Oxychloride 50 WP",
+          activeIngredient: "50% w/w Metallic Copper equivalent (FRAC M01)",
+          guidelines: "Mix 30g per 16-Liter knapsack sprayer. Spray during early morning hours to avoid phytotoxicity on young flush leaves. Preventive protective barrier against Cercospora spot.",
+          year: 2026,
+          category: "Protective Contact"
+        },
+        {
+          id: "REM-04",
+          targetDisease: "Leaf Spot",
+          name: "Score 250 EC (Difenoconazole)",
+          activeIngredient: "250 g/L Difenoconazole (FRAC 3 DMI-Fungicide)",
+          guidelines: "Dilute 0.5 mL per Liter water. Spray at first sign of target-like spot lesions. Maximum of 3 applications per season to avoid fungal resistance development.",
+          year: 2026,
+          category: "Systemic Curative"
+        },
+        {
+          id: "REM-05",
+          targetDisease: "Leaf Spot",
+          name: "Bio-Shield Trichoderma Harzianum Inoculant",
+          activeIngredient: "1x10^9 CFU/g Trichoderma harzianum strain DVO-4",
+          guidelines: "Apply 20g/tree around drip line and as bi-weekly foliar wash. Organic biological antagonist suppressing algal spot sporulation.",
+          year: 2026,
+          category: "Biological Control"
+        }
+      ],
+      users: [
+        {
+          id: "USR-001",
+          name: "Dr. Aris Evans",
+          email: "aris.evans@kingsentry.ph",
+          role: "ADMIN",
+          zone: "All Orchard Zones",
+          status: "Active",
+          created: "Jan 12, 2026"
+        },
+        {
+          id: "USR-002",
+          name: "Maria Leonor Santos, MSc",
+          email: "m.santos@kingsentry.ph",
+          role: "AGRONOMIST",
+          zone: "Zone B - River Basin",
+          status: "Active",
+          created: "Jan 15, 2026"
+        },
+        {
+          id: "USR-003",
+          name: "Engr. Danilo Cabilao",
+          email: "d.cabilao@kingsentry.ph",
+          role: "ADMIN",
+          zone: "All Orchard Zones",
+          status: "Active",
+          created: "Feb 02, 2026"
+        },
+        {
+          id: "USR-004",
+          name: "Regalado 'Jun' Perez",
+          email: "jun.perez@kingsentry.ph",
+          role: "FARMER",
+          zone: "Zone A - Upper Slope",
+          status: "Active",
+          created: "Feb 10, 2026"
+        },
+        {
+          id: "USR-005",
+          name: "Beatrice Alcantara",
+          email: "b.alcantara@kingsentry.ph",
+          role: "AGRONOMIST",
+          zone: "Zone D - Nursery Block",
+          status: "Active",
+          created: "Mar 01, 2026"
+        }
+      ],
+      activeInspectionScan: null,
+      currentTreatmentFilter: 'ALL',
+      showBboxOverlay: true,
+      highVeinContrast: false
+    };
+
+    function togglePanel(panelId, forceState) {
+      const panel = document.getElementById(panelId);
+      if (!panel) return;
+
+      const isCurrentlyExpanded = panel.classList.contains('is-expanded');
+      const shouldExpand = forceState !== undefined ? forceState : !isCurrentlyExpanded;
+
+      if (shouldExpand) {
+        panel.classList.remove('is-collapsed');
+        panel.classList.add('is-expanded');
+        const icon = panel.querySelector('.panel-toggle-btn i');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      } else {
+        panel.classList.remove('is-expanded');
+        panel.classList.add('is-collapsed');
+        const icon = panel.querySelector('.panel-toggle-btn i');
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+
+      if (shouldExpand) {
+        if (panelId === 'panel-diagnostics' && window.doughnutChartInstance) {
+          window.doughnutChartInstance.resize();
+        }
+        if (panelId === 'panel-zonal' && window.zoneChartInstance) {
+          window.zoneChartInstance.resize();
+        }
+      }
+    }
+
+    document.body.classList.add('hover-expand-enabled');
+
+    const toggleHoverModeBtn = document.getElementById('toggleHoverModeBtn');
+    const hoverModeStatus = document.getElementById('hoverModeStatus');
+
+    toggleHoverModeBtn.addEventListener('click', () => {
+      state.hoverModeActive = !state.hoverModeActive;
+      if (state.hoverModeActive) {
+        document.body.classList.add('hover-expand-enabled');
+        hoverModeStatus.textContent = "ON";
+        hoverModeStatus.className = "font-bold text-leafMint";
+        showToast("Hover-to-Show Mode Enabled: Hover over panels to expand", 'Healthy');
+      } else {
+        document.body.classList.remove('hover-expand-enabled');
+        hoverModeStatus.textContent = "OFF";
+        hoverModeStatus.className = "font-bold text-slate-400";
+        showToast("Hover-to-Show Mode Disabled: Click panels to open/close", 'Healthy');
+      }
+    });
+
+    document.getElementById('btnExpandAllDashboards').addEventListener('click', () => {
+      ['panel-kpi', 'panel-diagnostics', 'panel-zonal', 'panel-livefeed'].forEach(id => togglePanel(id, true));
+      showToast("All dashboard panels expanded", 'Healthy');
+    });
+
+    document.getElementById('btnCollapseAllDashboards').addEventListener('click', () => {
+      ['panel-kpi', 'panel-diagnostics', 'panel-zonal', 'panel-livefeed'].forEach(id => togglePanel(id, false));
+      showToast("All dashboard panels collapsed (Hover over any panel to preview)", 'Healthy');
+    });
+
+    document.querySelectorAll('.dash-isolate-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dash-isolate-btn').forEach(b => {
+          b.classList.remove('active', 'bg-white', 'text-emerald-950', 'shadow-sm', 'font-bold');
+          b.classList.add('text-slate-600', 'font-medium');
+        });
+        btn.classList.add('active', 'bg-white', 'text-emerald-950', 'shadow-sm', 'font-bold');
+        btn.classList.remove('text-slate-600', 'font-medium');
+
+        const target = btn.getAttribute('data-target');
+        const panels = ['panel-kpi', 'panel-diagnostics', 'panel-zonal', 'panel-livefeed'];
+
+        if (target === 'all') {
+          panels.forEach(pId => {
+            const el = document.getElementById(pId);
+            if (el) {
+              el.classList.remove('hidden');
+              togglePanel(pId, true);
+            }
+          });
+        } else {
+          panels.forEach(pId => {
+            const el = document.getElementById(pId);
+            if (el) {
+              if (pId === target) {
+                el.classList.remove('hidden');
+                togglePanel(pId, true);
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              } else {
+                el.classList.add('hidden');
+              }
+            }
+          });
+        }
+      });
+    });
+
+    const sidebar = document.getElementById('sidebar');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const closeSidebarMobileBtn = document.getElementById('closeSidebarMobileBtn');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+    if (mobileMenuBtn && sidebar) {
+      mobileMenuBtn.addEventListener('click', () => {
+        sidebar.classList.remove('-translate-x-full');
+        if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
+      });
+    }
+
+    if (closeSidebarMobileBtn && sidebar) {
+      closeSidebarMobileBtn.addEventListener('click', () => {
+        sidebar.classList.add('-translate-x-full');
+        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
+      });
+    }
+
+    if (sidebarBackdrop && sidebar) {
+      sidebarBackdrop.addEventListener('click', () => {
+        sidebar.classList.add('-translate-x-full');
+        sidebarBackdrop.classList.add('hidden');
+      });
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        showToast('King\'s Sentry Admin session logged out successfully.', 'info');
+      });
+    }
+
+    function switchTab(targetTabId) {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        if (btn.getAttribute('data-tab') === targetTabId) {
+          btn.classList.add('active', 'bg-[#2e7d32]', 'text-white');
+          btn.classList.remove('text-[#b0c7b3]', 'hover:text-white', 'hover:bg-white/5', 'bg-transparent');
+        } else {
+          btn.classList.remove('active', 'bg-[#2e7d32]', 'text-white');
+          btn.classList.add('text-[#b0c7b3]', 'hover:text-white', 'hover:bg-white/5', 'bg-transparent');
+        }
+      });
+
+      document.querySelectorAll('.tab-view').forEach(view => {
+        if (view.id === targetTabId) {
+          view.classList.remove('hidden');
+        } else {
+          view.classList.add('hidden');
+        }
+      });
+
+      if (targetTabId === 'tab-dashboard') {
+        if (window.doughnutChartInstance) window.doughnutChartInstance.resize();
+        if (window.zoneChartInstance) window.zoneChartInstance.resize();
+      }
+
+      if (window.innerWidth < 1024 && sidebar) {
+        sidebar.classList.add('-translate-x-full');
+        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
+      }
+    }
+
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.getAttribute('data-tab'));
+      });
+    });
+
+    let doughnutChartInstance = null;
+    let zoneChartInstance = null;
+
+    function initCharts() {
+      const doughnutCtx = document.getElementById('diseaseDoughnutChart').getContext('2d');
+      doughnutChartInstance = new Chart(doughnutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Healthy', 'Leaf Spot', 'Leaf Blight'],
+          datasets: [{
+            data: [state.kpis.healthy, state.kpis.leafSpot, state.kpis.leafBlight],
+            backgroundColor: ['#2d6a4f', '#d4a373', '#bc4749'],
+            borderWidth: 4,
+            borderColor: '#ffffff',
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '76%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = context.raw;
+                  const total = state.kpis.total;
+                  const pct = ((val / total) * 100).toFixed(1);
+                  return ` ${context.label}: ${val} scans (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+
+      const zoneCtx = document.getElementById('zoneBarLineChart').getContext('2d');
+      zoneChartInstance = new Chart(zoneCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Zone A (Slope)', 'Zone B (Riverbed)', 'Zone C (Ridge)', 'Zone D (Nursery)'],
+          datasets: [
+            {
+              label: 'Healthy',
+              data: [420, 310, 438, 250],
+              backgroundColor: '#2d6a4f',
+              borderRadius: 8
+            },
+            {
+              label: 'Leaf Spot',
+              data: [65, 92, 43, 68],
+              backgroundColor: '#d4a373',
+              borderRadius: 8
+            },
+            {
+              label: 'Leaf Blight',
+              data: [28, 86, 14, 28],
+              backgroundColor: '#bc4749',
+              borderRadius: 8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 12, family: 'Inter' } }
+            },
+            y: {
+              grid: { color: '#f1f5f9' },
+              ticks: { font: { size: 11, family: 'Inter' } }
+            }
+          }
+        }
+      });
+
+      window.doughnutChartInstance = doughnutChartInstance;
+      window.zoneChartInstance = zoneChartInstance;
+    }
+
+    function updateKPIsAndCharts() {
+      const total = state.kpis.total;
+      const healthy = state.kpis.healthy;
+      const spot = state.kpis.leafSpot;
+      const blight = state.kpis.leafBlight;
+
+      document.getElementById('kpiTotalScans').textContent = total.toLocaleString();
+      document.getElementById('kpiHealthy').textContent = healthy.toLocaleString();
+      document.getElementById('kpiLeafSpot').textContent = spot.toLocaleString();
+      document.getElementById('kpiLeafBlight').textContent = blight.toLocaleString();
+
+      const healthyPct = ((healthy / total) * 100).toFixed(1);
+      const spotPct = ((spot / total) * 100).toFixed(1);
+      const blightPct = ((blight / total) * 100).toFixed(1);
+
+      document.getElementById('kpiHealthyPct').textContent = `${healthyPct}%`;
+      document.getElementById('kpiLeafSpotPct').textContent = `${spotPct}%`;
+      document.getElementById('kpiLeafBlightPct').textContent = `${blightPct}%`;
+
+      document.getElementById('kpiHealthyBar').style.width = `${healthyPct}%`;
+      document.getElementById('kpiLeafSpotBar').style.width = `${spotPct}%`;
+      document.getElementById('kpiLeafBlightBar').style.width = `${blightPct}%`;
+
+      document.getElementById('legendHealthy').textContent = `${healthyPct}%`;
+      document.getElementById('legendSpot').textContent = `${spotPct}%`;
+      document.getElementById('legendBlight').textContent = `${blightPct}%`;
+      document.getElementById('centerHealthPct').textContent = `${Math.round(healthyPct)}%`;
+
+      if (doughnutChartInstance) {
+        doughnutChartInstance.data.datasets[0].data = [healthy, spot, blight];
+        doughnutChartInstance.update();
+      }
+    }
+
+    function renderScanTables() {
+      const recentBody = document.getElementById('dashboardRecentScansBody');
+      const scanTableBody = document.getElementById('scanTableBody');
+      const filterZoneVal = document.getElementById('filterZone') ? document.getElementById('filterZone').value : 'ALL';
+      const filterClassVal = document.getElementById('filterClass') ? document.getElementById('filterClass').value : 'ALL';
+
+      if (recentBody) {
+        recentBody.innerHTML = '';
+        state.scans.slice(0, 5).forEach(scan => {
+          const badgeClass = getBadgeClass(scan.detectedClass);
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 transition-colors';
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-mono font-bold text-slate-800">${scan.id}</td>
+            <td class="py-3 px-4">
+              <span class="font-bold text-slate-900">${scan.zone}</span>
+              <span class="text-xs text-slate-400 block font-medium">${scan.treeId}</span>
+            </td>
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${badgeClass}">
+                ${scan.detectedClass}
+              </span>
+            </td>
+            <td class="py-3 px-4">
+              <div class="flex items-center space-x-1.5">
+                <div class="w-12 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full ${scan.detectedClass === 'Healthy' ? 'bg-[#2d6a4f]' : scan.detectedClass === 'Leaf Spot' ? 'bg-[#d4a373]' : 'bg-[#bc4749]'}" style="width: ${scan.confidence}%"></div>
+                </div>
+                <span class="font-mono text-xs font-bold text-slate-700">${scan.confidence.toFixed(1)}%</span>
+              </div>
+            </td>
+            <td class="py-3 px-4 text-xs text-slate-500">${scan.timestamp}</td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="inspectScan('${scan.id}')" class="inline-flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-leafGreen text-xs font-bold transition-all border border-slate-200">
+                <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+                <span>Inspect BBox</span>
+              </button>
+            </td>
+          `;
+          recentBody.appendChild(tr);
+        });
+      }
+
+      if (scanTableBody) {
+        scanTableBody.innerHTML = '';
+        const filtered = state.scans.filter(scan => {
+          const matchZone = filterZoneVal === 'ALL' || scan.zone === filterZoneVal;
+          const matchClass = filterClassVal === 'ALL' || scan.detectedClass === filterClassVal;
+          return matchZone && matchClass;
+        });
+
+        document.getElementById('displayedScanCount').textContent = filtered.length;
+
+        if (filtered.length === 0) {
+          scanTableBody.innerHTML = `
+            <tr>
+              <td colspan="7" class="py-8 text-center text-slate-400 text-sm">
+                No scans found matching the selected filter criteria.
+              </td>
+            </tr>
+          `;
+        } else {
+          filtered.forEach(scan => {
+            const badgeClass = getBadgeClass(scan.detectedClass);
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition-colors';
+            tr.innerHTML = `
+              <td class="py-3.5 px-4 font-mono font-bold text-slate-800">
+                <div class="flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full ${scan.detectedClass === 'Healthy' ? 'bg-emerald-500' : scan.detectedClass === 'Leaf Spot' ? 'bg-amber-500' : 'bg-rose-500'}"></span>
+                  <span>${scan.id}</span>
+                </div>
+              </td>
+              <td class="py-3.5 px-4">
+                <span class="font-bold text-slate-800">${scan.zone}</span>
+                <span class="text-xs text-slate-400 block font-medium">${scan.treeId}</span>
+              </td>
+              <td class="py-3.5 px-4">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${badgeClass}">
+                  ${scan.detectedClass}
+                </span>
+              </td>
+              <td class="py-3.5 px-4">
+                <div class="flex items-center space-x-2">
+                  <div class="w-16 bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full ${scan.detectedClass === 'Healthy' ? 'bg-[#2d6a4f]' : scan.detectedClass === 'Leaf Spot' ? 'bg-[#d4a373]' : 'bg-[#bc4749]'}" style="width: ${scan.confidence}%"></div>
+                  </div>
+                  <span class="font-mono text-xs font-bold text-slate-800">${scan.confidence.toFixed(1)}%</span>
+                </div>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${scan.latency}</td>
+              <td class="py-3.5 px-4 text-xs text-slate-500">${scan.timestamp}</td>
+              <td class="py-3.5 px-4 text-center">
+                <button onclick="inspectScan('${scan.id}')" class="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95">
+                  <i data-lucide="scan" class="w-3.5 h-3.5"></i>
+                  <span>Inspect BBox</span>
+                </button>
+              </td>
+            `;
+            scanTableBody.appendChild(tr);
+          });
+        }
+      }
+
+      lucide.createIcons();
+    }
+
+    function getBadgeClass(diseaseClass) {
+      switch (diseaseClass) {
+        case 'Healthy':
+          return 'bg-emerald-100 text-[#1b4332] border border-emerald-300';
+        case 'Leaf Spot':
+          return 'bg-amber-100 text-amber-900 border border-amber-300';
+        case 'Leaf Blight':
+          return 'bg-rose-100 text-[#bc4749] border border-rose-300';
+        default:
+          return 'bg-slate-100 text-slate-800';
+      }
+    }
+
+    const filterZone = document.getElementById('filterZone');
+    const filterClass = document.getElementById('filterClass');
+    if (filterZone) filterZone.addEventListener('change', renderScanTables);
+    if (filterClass) filterClass.addEventListener('change', renderScanTables);
+
+    function generateSimulatedScan() {
+      const randomInt = Math.floor(Math.random() * 900) + 100;
+      const scanId = `KS-2026-${randomInt}`;
+      const zone = state.zones[Math.floor(Math.random() * state.zones.length)];
+      const cultivars = ['Puyat', 'Duyaya', 'Arancillo'];
+      const tree = `Tree #${Math.floor(Math.random() * 400) + 1} (${cultivars[Math.floor(Math.random() * cultivars.length)]})`;
+
+      const rand = Math.random();
+      let detectedClass = 'Healthy';
+      let bbox = { x: 80, y: 70, w: 390, h: 240 };
+      let notes = "Leaf demonstrates optimal vigor and healthy chlorophyll retention.";
+
+      if (rand > 0.82) {
+        detectedClass = 'Leaf Blight';
+        bbox = { 
+          x: Math.floor(Math.random() * 100) + 120, 
+          y: Math.floor(Math.random() * 60) + 80, 
+          w: Math.floor(Math.random() * 70) + 180, 
+          h: Math.floor(Math.random() * 60) + 140 
+        };
+        notes = "Acute foliar blight detected near lower leaf vein. High humidity risk in Sinoron river basin.";
+        state.kpis.leafBlight++;
+      } else if (rand > 0.58) {
+        detectedClass = 'Leaf Spot';
+        bbox = { 
+          x: Math.floor(Math.random() * 120) + 150, 
+          y: Math.floor(Math.random() * 80) + 100, 
+          w: Math.floor(Math.random() * 50) + 130, 
+          h: Math.floor(Math.random() * 50) + 110 
+        };
+        notes = "Chlorotic circular leaf spot observed. Recommend preventative copper spray application.";
+        state.kpis.leafSpot++;
+      } else {
+        state.kpis.healthy++;
+      }
+
+      state.kpis.total++;
+
+      const conf = (Math.random() * 8 + 91.5).toFixed(1);
+      const latency = (Math.random() * 4 + 11.2).toFixed(1) + " ms";
+
+      const newScan = {
+        id: scanId,
+        zone: zone,
+        treeId: tree,
+        detectedClass: detectedClass,
+        confidence: parseFloat(conf),
+        latency: latency,
+        timestamp: "Just now",
+        bbox: bbox,
+        notes: notes
+      };
+
+      state.scans.unshift(newScan);
+      updateKPIsAndCharts();
+      renderScanTables();
+      showToast(`New Mobile Scan Received: ${scanId} (${detectedClass}) in ${zone}`, detectedClass);
+    }
+
+    document.getElementById('quickSimulateBtn').addEventListener('click', generateSimulatedScan);
+    document.getElementById('btnNewScan').addEventListener('click', generateSimulatedScan);
+
+    function inspectScan(scanId) {
+      const scan = state.scans.find(s => s.id === scanId);
+      if (!scan) return;
+
+      state.activeInspectionScan = scan;
+
+      document.getElementById('modalScanIdTitle').textContent = `YOLO26 Inspector: ${scan.id}`;
+      document.getElementById('modalSubTitle').textContent = `${scan.zone} • ${scan.treeId} • Latency ${scan.latency}`;
+      
+      const badge = document.getElementById('modalDiagnosisBadge');
+      badge.textContent = `${scan.detectedClass} (${scan.confidence}%)`;
+      badge.className = `inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold mb-3 ${getBadgeClass(scan.detectedClass)}`;
+
+      document.getElementById('modalConfidence').textContent = `${scan.confidence}%`;
+      document.getElementById('modalZone').textContent = scan.zone;
+      document.getElementById('modalCoords').textContent = `[x:${scan.bbox.x}, y:${scan.bbox.y}, w:${scan.bbox.w}, h:${scan.bbox.h}]`;
+      document.getElementById('modalLatency').textContent = scan.latency;
+      document.getElementById('modalRemedyRecommendation').textContent = scan.notes;
+
+      drawLeafInspectionCanvas(scan);
+      document.getElementById('bboxModal').classList.remove('hidden');
+    }
+
+    function drawLeafInspectionCanvas(scan) {
+      const canvas = document.getElementById('bboxCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+      bgGrad.addColorStop(0, '#10251c');
+      bgGrad.addColorStop(1, '#07120d');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = 'rgba(66, 184, 131, 0.08)';
+      ctx.beginPath();
+      ctx.arc(90, 80, 75, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(470, 300, 95, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      const leafCenterY = h / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(80, leafCenterY);
+      ctx.bezierCurveTo(180, 60, 380, 60, 490, leafCenterY);
+      ctx.bezierCurveTo(380, h - 60, 180, h - 60, 80, leafCenterY);
+      ctx.closePath();
+
+      const leafGrad = ctx.createLinearGradient(80, 100, 480, 300);
+      if (state.highVeinContrast) {
+        leafGrad.addColorStop(0, '#0e3020');
+        leafGrad.addColorStop(0.5, '#194932');
+        leafGrad.addColorStop(1, '#0a2116');
+      } else {
+        leafGrad.addColorStop(0, '#235940');
+        leafGrad.addColorStop(0.4, '#38845e');
+        leafGrad.addColorStop(0.8, '#1b4332');
+        leafGrad.addColorStop(1, '#112b20');
+      }
+      ctx.fillStyle = leafGrad;
+      ctx.fill();
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(66, 184, 131, 0.4)';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(75, leafCenterY);
+      ctx.quadraticCurveTo(280, leafCenterY - 2, 490, leafCenterY);
+      ctx.lineWidth = state.highVeinContrast ? 4 : 3;
+      ctx.strokeStyle = state.highVeinContrast ? '#a7f3d0' : '#74c69d';
+      ctx.stroke();
+
+      const veinColor = state.highVeinContrast ? 'rgba(167, 243, 208, 0.45)' : 'rgba(116, 198, 157, 0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = veinColor;
+
+      for (let x = 120; x <= 450; x += 32) {
+        ctx.beginPath();
+        ctx.moveTo(x, leafCenterY);
+        ctx.quadraticCurveTo(x + 25, leafCenterY - 45, x + 40, leafCenterY - (Math.sin((x / 500) * Math.PI) * 90));
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x, leafCenterY);
+        ctx.quadraticCurveTo(x + 25, leafCenterY + 45, x + 40, leafCenterY + (Math.sin((x / 500) * Math.PI) * 90));
+        ctx.stroke();
+      }
+
+      if (scan.detectedClass === 'Leaf Spot') {
+        const bx = scan.bbox.x + scan.bbox.w / 2;
+        const by = scan.bbox.y + scan.bbox.h / 2;
+
+        const spotGrad = ctx.createRadialGradient(bx, by, 4, bx, by, 35);
+        spotGrad.addColorStop(0, '#593e25');
+        spotGrad.addColorStop(0.4, '#a77648');
+        spotGrad.addColorStop(0.7, '#d4a373');
+        spotGrad.addColorStop(1, 'rgba(212, 163, 115, 0)');
+        ctx.fillStyle = spotGrad;
+        ctx.beginPath();
+        ctx.arc(bx, by, 36, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(89, 62, 37, 0.7)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(bx, by, 18, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(bx + 26, by - 22, 12, 0, Math.PI * 2);
+        ctx.fillStyle = '#b07d4b';
+        ctx.fill();
+      } 
+      else if (scan.detectedClass === 'Leaf Blight') {
+        const bx = scan.bbox.x + scan.bbox.w / 2;
+        const by = scan.bbox.y + scan.bbox.h / 2;
+
+        const blightGrad = ctx.createRadialGradient(bx, by, 10, bx, by, 65);
+        blightGrad.addColorStop(0, '#3a0c0e');
+        blightGrad.addColorStop(0.3, '#781d22');
+        blightGrad.addColorStop(0.6, '#bc4749');
+        blightGrad.addColorStop(0.85, '#e07a5f');
+        blightGrad.addColorStop(1, 'rgba(188, 71, 73, 0)');
+
+        ctx.fillStyle = blightGrad;
+        ctx.beginPath();
+        ctx.moveTo(bx - 40, by - 25);
+        ctx.bezierCurveTo(bx - 20, by - 60, bx + 50, by - 40, bx + 45, by + 10);
+        ctx.bezierCurveTo(bx + 40, by + 50, bx - 10, by + 55, bx - 45, by + 30);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(30, 8, 9, 0.85)';
+        ctx.beginPath();
+        ctx.arc(bx, by, 18, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+
+      if (state.showBboxOverlay) {
+        const { x, y, w: bw, h: bh } = scan.bbox;
+        const color = scan.detectedClass === 'Healthy' ? '#42b883' : scan.detectedClass === 'Leaf Spot' ? '#d4a373' : '#bc4749';
+        const labelText = `${scan.detectedClass} ${(scan.confidence).toFixed(1)}%`;
+
+        ctx.fillStyle = scan.detectedClass === 'Healthy' ? 'rgba(66, 184, 131, 0.12)' : scan.detectedClass === 'Leaf Spot' ? 'rgba(212, 163, 115, 0.18)' : 'rgba(188, 71, 73, 0.22)';
+        ctx.fillRect(x, y, bw, bh);
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, bw, bh);
+
+        const cornerLen = 14;
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = color;
+
+        ctx.beginPath();
+        ctx.moveTo(x, y + cornerLen); ctx.lineTo(x, y); ctx.lineTo(x + cornerLen, y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x + bw - cornerLen, y); ctx.lineTo(x + bw, y); ctx.lineTo(x + bw, y + cornerLen);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x, y + bh - cornerLen); ctx.lineTo(x, y + bh); ctx.lineTo(x + cornerLen, y + bh);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x + bw - cornerLen, y + bh); ctx.lineTo(x + bw, y + bh); ctx.lineTo(x + bw, y + bh - cornerLen);
+        ctx.stroke();
+
+        ctx.font = 'bold 11px Inter, sans-serif';
+        const textMetrics = ctx.measureText(labelText);
+        const tagWidth = textMetrics.width + 16;
+        const tagHeight = 22;
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(x, y - tagHeight - 2, tagWidth, tagHeight, [4, 4, 0, 0]);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(labelText, x + 8, y - 7);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 1;
+        const cx = x + bw / 2;
+        const cy = y + bh / 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
+        ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
+        ctx.stroke();
+      }
+    }
+
+    document.getElementById('toggleBboxBtn').addEventListener('click', () => {
+      state.showBboxOverlay = !state.showBboxOverlay;
+      if (state.activeInspectionScan) drawLeafInspectionCanvas(state.activeInspectionScan);
+    });
+
+    document.getElementById('toggleVeinBtn').addEventListener('click', () => {
+      state.highVeinContrast = !state.highVeinContrast;
+      if (state.activeInspectionScan) drawLeafInspectionCanvas(state.activeInspectionScan);
+    });
+
+    const closeModal = () => document.getElementById('bboxModal').classList.add('hidden');
+    document.getElementById('closeBboxModal').addEventListener('click', closeModal);
+    document.getElementById('closeBboxModalBottom').addEventListener('click', closeModal);
+
+    function renderRemedies() {
+      const container = document.getElementById('remediesContainer');
+      if (!container) return;
+
+      container.innerHTML = '';
+      
+      const filtered = state.remedies.filter(rem => {
+        if (state.currentTreatmentFilter === 'ALL') return true;
+        return rem.targetDisease === state.currentTreatmentFilter;
+      });
+
+      document.getElementById('countAllRemedies').textContent = state.remedies.length;
+      document.getElementById('countSpotRemedies').textContent = state.remedies.filter(r => r.targetDisease === 'Leaf Spot').length;
+      document.getElementById('countBlightRemedies').textContent = state.remedies.filter(r => r.targetDisease === 'Leaf Blight').length;
+
+      filtered.forEach(remedy => {
+        const isBlight = remedy.targetDisease === 'Leaf Blight';
+        const cardBorder = isBlight ? 'hover:border-[#bc4749]' : 'hover:border-[#d4a373]';
+        const headerBadge = isBlight ? 'bg-rose-100 text-[#bc4749] border-rose-200' : 'bg-amber-100 text-amber-900 border-amber-200';
+        
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-3xl p-5 shadow-card border border-slate-200/80 ${cardBorder} transition-all duration-200 flex flex-col justify-between`;
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${headerBadge}">
+                <i data-lucide="${isBlight ? 'flame' : 'alert-triangle'}" class="w-3.5 h-3.5 mr-1.5"></i>
+                ${remedy.targetDisease} Protocol
+              </span>
+              <span class="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                Active: ${remedy.year}
+              </span>
+            </div>
+
+            <h4 class="font-display font-extrabold text-base text-slate-900 mb-1">${remedy.name}</h4>
+            <p class="text-xs font-semibold text-emerald-800 mb-3 bg-emerald-50 px-2.5 py-1 rounded-lg inline-block">
+              ${remedy.activeIngredient}
+            </p>
+
+            <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs text-slate-600 leading-relaxed mb-4">
+              <div class="font-bold text-slate-800 mb-1 flex items-center">
+                <i data-lucide="clipboard-list" class="w-3.5 h-3.5 mr-1.5 text-slate-400"></i>
+                Application & Dosage Guidelines:
+              </div>
+              <p>${remedy.guidelines}</p>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 font-medium">Category: ${remedy.category || 'Curative Fungicide'}</span>
+            <button onclick="deleteRemedy('${remedy.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Delete Protocol">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    document.querySelectorAll('.treatment-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.treatment-filter-btn').forEach(b => {
+          b.classList.remove('bg-[#1b4332]', 'text-white', 'shadow-sm');
+          b.classList.add('bg-white', 'text-slate-600', 'border', 'border-slate-200');
+        });
+        btn.classList.remove('bg-white', 'text-slate-600', 'border', 'border-slate-200');
+        btn.classList.add('bg-[#1b4332]', 'text-white', 'shadow-sm');
+
+        state.currentTreatmentFilter = btn.getAttribute('data-filter');
+        renderRemedies();
+      });
+    });
+
+    const openAddRemedyBtn = document.getElementById('openAddRemedyBtn');
+    const remedyModal = document.getElementById('remedyModal');
+    const closeRemedyModal = document.getElementById('closeRemedyModal');
+    const cancelRemedyBtn = document.getElementById('cancelRemedyBtn');
+    const remedyForm = document.getElementById('remedyForm');
+
+    openAddRemedyBtn.addEventListener('click', () => {
+      remedyForm.reset();
+      document.getElementById('remedyYear').value = "2026";
+      remedyModal.classList.remove('hidden');
+    });
+
+    const hideRemedyModal = () => remedyModal.classList.add('hidden');
+    closeRemedyModal.addEventListener('click', hideRemedyModal);
+    cancelRemedyBtn.addEventListener('click', hideRemedyModal);
+
+    remedyForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const targetDisease = document.getElementById('remedyTargetDisease').value;
+      const name = document.getElementById('remedyName').value.trim();
+      const activeIngredient = document.getElementById('remedyActiveIngredient').value.trim() || 'Active Fungicide Agent';
+      const year = parseInt(document.getElementById('remedyYear').value, 10) || 2026;
+      const guidelines = document.getElementById('remedyGuidelines').value.trim();
+
+      const newRemedy = {
+        id: `REM-${Date.now().toString().slice(-4)}`,
+        targetDisease,
+        name,
+        activeIngredient,
+        guidelines,
+        year,
+        category: targetDisease === 'Leaf Blight' ? 'Systemic Curative' : 'Protective Contact'
+      };
+
+      state.remedies.unshift(newRemedy);
+      hideRemedyModal();
+      renderRemedies();
+      showToast(`Added new protocol: ${name}`, targetDisease);
+    });
+
+    function deleteRemedy(remedyId) {
+      const idx = state.remedies.findIndex(r => r.id === remedyId);
+      if (idx !== -1) {
+        const deleted = state.remedies.splice(idx, 1)[0];
+        renderRemedies();
+        showToast(`Removed protocol: ${deleted.name}`, 'Healthy');
+      }
+    }
+
+    function renderUsers() {
+      const usersBody = document.getElementById('usersTableBody');
+      if (!usersBody) return;
+
+      usersBody.innerHTML = '';
+      
+      let adminCount = 0;
+      let agronomistCount = 0;
+      let farmerCount = 0;
+
+      state.users.forEach(user => {
+        if (user.role === 'ADMIN') adminCount++;
+        else if (user.role === 'AGRONOMIST') agronomistCount++;
+        else if (user.role === 'FARMER') farmerCount++;
+
+        let roleBadgeClass = '';
+        if (user.role === 'ADMIN') {
+          roleBadgeClass = 'bg-[#1b4332] text-white';
+        } else if (user.role === 'AGRONOMIST') {
+          roleBadgeClass = 'bg-teal-100 text-teal-900 border border-teal-200';
+        } else {
+          roleBadgeClass = 'bg-emerald-50 text-[#2d6a4f] border border-emerald-200';
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+        tr.innerHTML = `
+          <td class="py-3.5 px-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
+                ${user.name.split(' ').map(n => n[0]).slice(0,2).join('')}
+              </div>
+              <div>
+                <span class="font-bold text-slate-900 block">${user.name}</span>
+                <span class="text-xs text-slate-400">${user.email}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${roleBadgeClass}">
+              ${user.role}
+            </span>
+          </td>
+          <td class="py-3.5 px-4 text-xs font-semibold text-slate-700">
+            ${user.zone}
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="inline-flex items-center text-xs font-semibold text-emerald-700">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
+              ${user.status}
+            </span>
+          </td>
+          <td class="py-3.5 px-4 text-xs text-slate-500">
+            ${user.created}
+          </td>
+          <td class="py-3.5 px-4 text-right">
+            <button onclick="removeUser('${user.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Deactivate user">
+              <i data-lucide="user-x" class="w-4 h-4"></i>
+            </button>
+          </td>
+        `;
+        usersBody.appendChild(tr);
+      });
+
+      document.getElementById('adminCount').textContent = `${adminCount} Accounts`;
+      document.getElementById('agronomistCount').textContent = `${agronomistCount} Accounts`;
+      document.getElementById('farmerCount').textContent = `${farmerCount} Accounts`;
+      document.getElementById('sidebarUserCount').textContent = state.users.length;
+
+      lucide.createIcons();
+    }
+
+    const openRegisterUserBtn = document.getElementById('openRegisterUserBtn');
+    const userModal = document.getElementById('userModal');
+    const closeUserModal = document.getElementById('closeUserModal');
+    const cancelUserBtn = document.getElementById('cancelUserBtn');
+    const userForm = document.getElementById('userForm');
+
+    openRegisterUserBtn.addEventListener('click', () => {
+      userForm.reset();
+      userModal.classList.remove('hidden');
+    });
+
+    const hideUserModal = () => userModal.classList.add('hidden');
+    closeUserModal.addEventListener('click', hideUserModal);
+    cancelUserBtn.addEventListener('click', hideUserModal);
+
+    userForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('userFullName').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      const role = document.getElementById('userRole').value;
+      const zone = document.getElementById('userZone').value;
+
+      const newUser = {
+        id: `USR-${Date.now().toString().slice(-4)}`,
+        name,
+        email,
+        role,
+        zone,
+        status: "Active",
+        created: "Just now"
+      };
+
+      state.users.push(newUser);
+      hideUserModal();
+      renderUsers();
+      showToast(`Registered new ${role}: ${name}`, 'Healthy');
+    });
+
+    function removeUser(userId) {
+      const idx = state.users.findIndex(u => u.id === userId);
+      if (idx !== -1) {
+        const removed = state.users.splice(idx, 1)[0];
+        renderUsers();
+        showToast(`Deactivated account for ${removed.name}`, 'Leaf Spot');
+      }
+    }
+
+    function showToast(message, type = 'Healthy') {
+      const toastContainer = document.getElementById('toastContainer');
+      if (!toastContainer) return;
+
+      const toast = document.createElement('div');
+      let borderLeftColor = '#2d6a4f';
+      let icon = 'check-circle';
+
+      if (type === 'Leaf Blight') {
+        borderLeftColor = '#bc4749';
+        icon = 'alert-octagon';
+      } else if (type === 'Leaf Spot') {
+        borderLeftColor = '#d4a373';
+        icon = 'alert-triangle';
+      }
+
+      toast.className = `pointer-events-auto flex items-center space-x-3 bg-white text-slate-800 text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-xl border border-slate-200 transition-all duration-300 transform translate-y-2 opacity-0`;
+      toast.style.borderLeft = `5px solid ${borderLeftColor}`;
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-5 h-5 shrink-0" style="color: ${borderLeftColor}"></i>
+        <div class="font-medium text-slate-800">${message}</div>
+      `;
+
+      toastContainer.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 20);
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initCharts();
+      updateKPIsAndCharts();
+      renderScanTables();
+      renderRemedies();
+      renderUsers();
+    });
+  </script>
+</body>
+</html>

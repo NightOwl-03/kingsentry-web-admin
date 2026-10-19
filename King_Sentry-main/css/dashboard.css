@@ -1,0 +1,33 @@
+/* =============================================================================
+   KINGSENTRY — DASHBOARD PAGE CSS
+   Styles specific to dashboard.html
+   ============================================================================= */
+
+/* --------------------------------------------------------------------------- */
+/* Dashboard Isolation Filter Pills                                               */
+/* --------------------------------------------------------------------------- */
+.dash-isolate-btn {
+  transition: all 0.15s ease;
+}
+
+.dash-isolate-btn.active {
+  background: #ffffff;
+  color: #0d2b1a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Panel Toggle Chevron Animation                                                 */
+/* --------------------------------------------------------------------------- */
+.dashboard-panel.is-collapsed .panel-toggle-btn i {
+  transform: rotate(180deg);
+}
+
+.dashboard-panel.is-expanded .panel-toggle-btn i {
+  transform: rotate(0deg);
+}
+
+.panel-toggle-btn i {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

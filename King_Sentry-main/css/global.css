@@ -1,0 +1,126 @@
+/* =============================================================================
+   KINGSENTRY — GLOBAL CSS
+   Shared across all pages: sidebar, topbar, body, scrollbars, modals, toasts
+   ============================================================================= */
+
+/* Google Fonts are loaded via <link> in each HTML file */
+
+/* --------------------------------------------------------------------------- */
+/* Base Body & Typography                                                        */
+/* --------------------------------------------------------------------------- */
+body {
+  background: #f0f4f2;
+  background-image:
+    radial-gradient(at 0% 0%, rgba(35, 89, 64, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(66, 184, 131, 0.05) 0px, transparent 50%);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+}
+
+/* Login page resets overflow so its full-screen split layout is unconstrained */
+body.login-body {
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+.font-display {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Custom Scrollbars                                                              */
+/* --------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #e9ecef;
+}
+::-webkit-scrollbar-thumb {
+  background: #b7c4bd;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #84998d;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Left Sidebar Navigation                                                        */
+/* --------------------------------------------------------------------------- */
+#sidebar {
+  background-color: #142e1e;
+}
+
+#sidebar .nav-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.875rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  color: #b0c7b3;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+#sidebar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+#sidebar .nav-link.active {
+  background-color: #2e7d32 !important;
+  color: #ffffff !important;
+}
+
+/* --------------------------------------------------------------------------- */
+/* BBox Canvas Container (used in modal on dashboard & photo-repository pages)   */
+/* --------------------------------------------------------------------------- */
+.bbox-canvas-container {
+  background: radial-gradient(circle at center, #1b3d2f 0%, #0c1c15 100%);
+}
+
+/* --------------------------------------------------------------------------- */
+/* Collapsible Dashboard Panel Transitions (used on dashboard.html)              */
+/* --------------------------------------------------------------------------- */
+.dashboard-panel-content {
+  transition:
+    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease,
+    margin 0.3s ease;
+  overflow: hidden;
+}
+
+.dashboard-panel.is-collapsed .dashboard-panel-content {
+  max-height: 0 !important;
+  opacity: 0;
+  margin-top: 0 !important;
+  pointer-events: none;
+}
+
+.dashboard-panel.is-expanded .dashboard-panel-content {
+  max-height: 2000px !important;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Hover-to-show: when collapsed and hovered, expand temporarily */
+.hover-expand-enabled .dashboard-panel.is-collapsed:hover .dashboard-panel-content {
+  max-height: 2000px !important;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Hover hint indicator badge */
+.dashboard-panel .hover-indicator {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.hover-expand-enabled .dashboard-panel.is-collapsed:hover .hover-indicator {
+  opacity: 1;
+}

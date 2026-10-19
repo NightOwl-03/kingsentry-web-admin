@@ -1,0 +1,99 @@
+/* =============================================================================
+   KINGSENTRY — PHOTO REPOSITORY PAGE CSS  (css/photo-repository.css)
+   Styles for User-Based Scan Archive, Cards Grid, Leaf Previews & Modals
+   ============================================================================= */
+
+/* --------------------------------------------------------------------------- */
+/* View Transitions & Containers                                               */
+/* --------------------------------------------------------------------------- */
+.view-transition {
+  transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+}
+
+.view-transition.fade-out {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.view-transition.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --------------------------------------------------------------------------- */
+/* User Table Row Hover                                                        */
+/* --------------------------------------------------------------------------- */
+.user-row {
+  transition: all 0.15s ease-in-out;
+}
+
+.user-row:hover {
+  background-color: #f1f7f4;
+}
+
+/* --------------------------------------------------------------------------- */
+/* Scan Cards Grid & Card Aesthetics                                           */
+/* --------------------------------------------------------------------------- */
+.scan-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  will-change: transform;
+}
+
+.scan-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -4px rgba(15, 33, 25, 0.1), 0 4px 12px -2px rgba(15, 33, 25, 0.05);
+  border-color: #cbd5e1;
+}
+
+/* Leaf Canvas Preview in Cards */
+.leaf-card-viewport {
+  background: radial-gradient(circle at center, #132a1d 0%, #06120b 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.leaf-card-viewport canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.scan-card:hover .leaf-card-viewport canvas {
+  transform: scale(1.025);
+}
+
+/* --------------------------------------------------------------------------- */
+/* BBox Canvas Container (Modal)                                               */
+/* --------------------------------------------------------------------------- */
+.modal-canvas-wrap {
+  background: radial-gradient(circle at center, #10261b 0%, #050d09 100%);
+}
+
+/* --------------------------------------------------------------------------- */
+/* Risk Badges & Pills                                                         */
+/* --------------------------------------------------------------------------- */
+.badge-risk-high {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.badge-risk-moderate {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-risk-low {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* Focus styles */
+.search-focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(35, 89, 64, 0.2);
+}

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo Repository | King's Sentry Admin</title>
+  <meta name="description" content="User-based scan repository and foliar disease history with YOLO26 edge computer vision telemetry for King's Sentry.">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emeraldDark: '#0d2319', emeraldMid: '#163a2b', leafGreen: '#235940',
+            leafMint: '#42b883', leafLight: '#d8f3dc', warningGold: '#d4a373',
+            alertRed: '#bc4749', cardBg: '#ffffff', softSlate: '#f4f7f5'
+          },
+          fontFamily: { sans: ['Inter','sans-serif'], display: ['Outfit','sans-serif'] },
+          boxShadow: {
+            'glow-mint': '0 0 20px -3px rgba(66,184,131,0.25)',
+            'card': '0 4px 20px -2px rgba(15,33,25,0.05),0 2px 6px -1px rgba(15,33,25,0.03)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/photo-repository.css">
+</head>
+<body class="text-slate-800 antialiased flex min-h-screen selection:bg-leafGreen selection:text-white bg-[#f8fafc]">
+
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity"></div>
+
+  <aside id="sidebar" class="fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-[#142e1e] flex flex-col justify-between shrink-0 h-screen overflow-y-auto select-none transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 border-r border-emerald-950/40 shadow-2xl lg:shadow-none">
+    <div>
+      <div class="px-6 pt-7 pb-6 flex items-center justify-between">
+        <a href="dashboard.html" class="text-xl font-display font-bold text-[#8dc572] tracking-tight no-underline">
+          King's Sentry Admin
+        </a>
+        <button id="closeSidebarMobileBtn" class="lg:hidden text-[#b0c7b3] hover:text-white p-1 rounded-lg hover:bg-white/10" aria-label="Close Navigation">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <nav class="space-y-0.5" aria-label="Main Navigation">
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="photo-repository.html" class="nav-link active" aria-current="page">Photo Repository</a>
+        <a href="manage-treatments.html" class="nav-link">Manage Treatments</a>
+        <a href="user-accounts.html" class="nav-link">User Accounts</a>
+      </nav>
+    </div>
+
+    <div class="p-6">
+      <button id="logoutBtn" class="text-sm font-medium text-[#e57373] hover:text-red-300 transition-colors flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0 text-left">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0 min-h-screen bg-[#f8fafc] overflow-y-auto">
+
+    <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3 flex items-center justify-between shadow-xs">
+      <div class="flex items-center space-x-3">
+        <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" aria-label="Open Navigation">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div class="flex items-center text-xs text-slate-600 font-medium space-x-2">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-warningGold shrink-0"></i>
+          <span class="truncate font-semibold text-slate-800">Barangay Sinoron, Santa Cruz</span>
+          <span class="hidden md:inline text-[11px] text-slate-500 font-medium">Davao del Sur</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <button id="quickSimulateBtn" class="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-xs font-semibold text-white shadow-xs transition-all active:scale-95">
+          <i data-lucide="scan-line" class="w-4 h-4 text-leafMint"></i>
+          <span class="hidden xs:inline">Simulate Scan</span>
+        </button>
+        <div class="hidden xl:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-800">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-leafMint opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-leafGreen"></span>
+          </span>
+          <span class="font-medium">Sinoron Edge Node</span>
+        </div>
+        <div class="flex items-center space-x-2.5 pl-2 border-l border-slate-200">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-leafGreen to-emerald-900 flex items-center justify-center font-bold text-xs text-white shadow-xs">AT</div>
+          <div class="hidden sm:block text-left">
+            <div class="text-xs font-bold text-slate-800 leading-tight">Dr. Aris Evans</div>
+            <div class="text-[10px] text-slate-500 font-semibold uppercase">Chief Agronomist</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1500px] w-full mx-auto space-y-6">
+
+      <section id="userListView" class="space-y-6 view-transition">
+
+        <div class="bg-white p-6 rounded-3xl shadow-card border border-slate-200/80 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 class="text-xl sm:text-2xl font-display font-extrabold text-slate-900">Photo Repository</h1>
+              <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">User Scan Archive</span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">
+              Select a registered farmer or technician to inspect their field scan history, disease records, and edge CV telemetry.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-right">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Total Scanners</div>
+              <div id="statTotalUsers" class="text-base font-extrabold text-slate-800">6 Farmers / Staff</div>
+            </div>
+            <div class="px-3.5 py-2 rounded-2xl bg-emerald-50 border border-emerald-200/70 text-right">
+              <div class="text-[10px] font-bold uppercase text-emerald-600">Total Scans</div>
+              <div id="statTotalScans" class="text-base font-extrabold text-leafGreen">69 Records</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div class="flex-1 flex items-center space-x-3">
+            <label for="userSearchInput" class="text-xs font-bold text-slate-700 whitespace-nowrap flex items-center gap-1.5">
+              <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+              <span>Search user:</span>
+            </label>
+            <div class="relative flex-1 max-w-md">
+              <input type="text" id="userSearchInput" placeholder="Search by name, email, or zone..."
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2 text-xs sm:text-sm text-slate-800 search-focus-ring placeholder:text-slate-400">
+              <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <select id="userRoleFilter" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 search-focus-ring">
+              <option value="ALL">All Roles</option>
+              <option value="FARMER">Field Farmers</option>
+              <option value="AGRONOMIST">Agronomists</option>
+              <option value="ADMIN">Administrators</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-card border border-slate-200/80 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider border-b border-slate-100">
+                <tr>
+                  <th class="py-3.5 px-5">User</th>
+                  <th class="py-3.5 px-4">Role &amp; Orchard Zone</th>
+                  <th class="py-3.5 px-4">Number of Scans</th>
+                  <th class="py-3.5 px-4">Latest Scan</th>
+                  <th class="py-3.5 px-5 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <div>Showing <span id="displayedUserCount" class="font-bold text-slate-800">0</span> registered users/farmers</div>
+            <div class="flex items-center space-x-2">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span class="text-slate-600">Click any user row to view their individual scan history</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <section id="userScanView" class="space-y-6 view-transition hidden">
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center space-x-3">
+            <button id="backToUsersBtn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-leafGreen hover:bg-emerald-50/50 text-slate-700 hover:text-leafGreen text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-95">
+              <i data-lucide="arrow-left" class="w-4 h-4"></i>
+              <span>Back to Users</span>
+            </button>
+            <div class="flex items-center text-xs sm:text-sm text-slate-500 font-medium space-x-2">
+              <span>Photo Repository</span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+              <span id="breadcrumbUserName" class="font-bold text-leafGreen">Juan Dela Cruz</span>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <button id="simulateUserScanBtn" class="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-leafGreen hover:bg-emerald-700 text-xs font-bold text-white shadow-xs transition-all active:scale-95">
+              <i data-lucide="plus-circle" class="w-4 h-4 text-leafMint"></i>
+              <span>Simulate Scan for User</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl shadow-card border border-slate-200/80 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div class="flex items-center space-x-4">
+            <div id="userAvatarLarge" class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-leafGreen to-emerald-950 text-white flex items-center justify-center font-display font-extrabold text-xl sm:text-2xl shadow-md shrink-0">
+              JD
+            </div>
+            <div>
+              <div class="flex items-center space-x-2.5 flex-wrap gap-y-1">
+                <h2 id="userHeaderName" class="text-xl sm:text-2xl font-display font-extrabold text-slate-900">Juan Dela Cruz</h2>
+                <span id="userScanBadge" class="bg-emerald-100 text-leafGreen text-xs font-bold px-3 py-1 rounded-full border border-emerald-200">
+                  12 Scan Records
+                </span>
+                <span id="userRoleBadge" class="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                  FARMER
+                </span>
+              </div>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-1.5">
+                <span class="flex items-center gap-1">
+                  <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span id="userHeaderEmail">juan.delacruz@kingsentry.ph</span>
+                </span>
+                <span class="flex items-center gap-1">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span id="userHeaderZone">Zone B – River Basin</span>
+                </span>
+                <span class="flex items-center gap-1">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>Latest: <strong id="userHeaderLatest" class="text-slate-700">24 Sep 2026 — 10:25 AM</strong></span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+            <div class="px-3 py-1.5 rounded-xl bg-white border border-slate-200/70 text-center">
+              <div class="text-[10px] font-bold uppercase text-slate-400">Total Scans</div>
+              <div id="metricTotal" class="text-sm font-extrabold text-slate-800">12</div>
+            </div>
+            <div class="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200/80 text-center">
+              <div class="text-[10px] font-bold uppercase text-rose-600">High Risk (Blight)</div>
+              <div id="metricBlight" class="text-sm font-extrabold text-rose-700">4</div>
+            </div>
+            <div class="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200/80 text-center">
+              <div class="text-[10px] font-bold uppercase text-amber-700">Moderate (Spot)</div>
+              <div id="metricSpot" class="text-sm font-extrabold text-amber-800">3</div>
+            </div>
+            <div class="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-center">
+              <div class="text-[10px] font-bold uppercase text-emerald-700">Low Risk (Healthy)</div>
+              <div id="metricHealthy" class="text-sm font-extrabold text-leafGreen">5</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-card border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="relative">
+              <input type="text" id="scanSearchInput" placeholder="Search scan ID or tree #..."
+                class="bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 search-focus-ring placeholder:text-slate-400 w-52 sm:w-60">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+            </div>
+
+            <select id="scanFilterDisease" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 search-focus-ring">
+              <option value="ALL">All Diagnoses</option>
+              <option value="Leaf Blight">Leaf Blight (Alert)</option>
+              <option value="Leaf Spot">Leaf Spot (Warning)</option>
+              <option value="Healthy">Healthy (Optimal)</option>
+            </select>
+
+            <select id="scanFilterRisk" class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 search-focus-ring">
+              <option value="ALL">All Risk Levels</option>
+              <option value="High">High Risk Only</option>
+              <option value="Moderate">Moderate Risk Only</option>
+              <option value="Low">Low Risk Only</option>
+            </select>
+          </div>
+
+          <div class="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl self-start md:self-auto">
+            <button id="viewModeCardsBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-slate-800 shadow-xs" title="Switch to Cards View">
+              <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-leafGreen"></i>
+              <span>Cards View</span>
+            </button>
+            <button id="viewModeTableBtn" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all" title="Switch to Table View">
+              <i data-lucide="list" class="w-3.5 h-3.5"></i>
+              <span>Table View</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="userScansGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        </div>
+
+        <div id="userScansTableContainer" class="bg-white rounded-3xl shadow-card border border-slate-200/80 overflow-hidden hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider border-b border-slate-100">
+                <tr>
+                  <th class="py-3.5 px-4">Scan Identifier</th>
+                  <th class="py-3.5 px-4">Durian Leaf Preview</th>
+                  <th class="py-3.5 px-4">Farm Zone &amp; Tree</th>
+                  <th class="py-3.5 px-4">Detected Disease</th>
+                  <th class="py-3.5 px-4">Confidence</th>
+                  <th class="py-3.5 px-4">Risk Level</th>
+                  <th class="py-3.5 px-4">Scanned Date &amp; Time</th>
+                  <th class="py-3.5 px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="userScansTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="userScansEmptyState" class="hidden bg-white p-12 rounded-3xl shadow-card border border-slate-200/80 text-center">
+          <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+            <i data-lucide="image-off" class="w-7 h-7"></i>
+          </div>
+          <h3 class="font-display font-bold text-slate-800 text-base">No Scans Found</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+            No scan records match your active search or filter criteria for this user.
+          </p>
+          <button id="clearScanFiltersBtn" class="mt-4 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+            Reset Filters
+          </button>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <div id="scanDetailsModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-4xl w-full overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+      
+      <div class="px-6 py-4 bg-[#0d2319] text-white flex items-center justify-between border-b border-emerald-900/60">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-leafGreen flex items-center justify-center text-leafMint">
+            <i data-lucide="scan" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-base sm:text-lg text-white" id="modalScanIdTitle">Scan Details: KS-2026-0892</h3>
+            <p class="text-xs text-emerald-200/80" id="modalSubTitle">Barangay Sinoron Field Edge Scan</p>
+          </div>
+        </div>
+        <button id="closeModalBtn" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition-colors" aria-label="Close modal">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 flex flex-col items-center justify-center">
+          <div class="w-full relative rounded-2xl overflow-hidden shadow-inner border border-slate-800 modal-canvas-wrap flex items-center justify-center p-2">
+            <canvas id="modalCanvas" width="560" height="380" class="max-w-full h-auto rounded-xl shadow-lg"></canvas>
+            
+            <div class="absolute top-4 left-4 bg-slate-950/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/60 text-[11px] text-slate-300 font-mono flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>YOLO26-CV • 640x640 Input</span>
+            </div>
+
+            <div id="modalBboxBadgeOverlay" class="absolute bottom-4 left-4 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-mono text-emerald-300 border border-emerald-500/30">
+              Edge Telemetry Active
+            </div>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between w-full text-xs text-slate-500 px-1">
+            <div class="flex items-center space-x-2">
+              <button id="toggleBboxBtn" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">
+                Toggle Overlay BBox
+              </button>
+              <button id="toggleVeinBtn" class="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors">
+                Toggle Vein Contrast
+              </button>
+            </div>
+            <span class="text-[11px] text-slate-400">Resolution: 560 × 380 px</span>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col justify-between space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200/80">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Disease Detection Result</div>
+            <div class="flex items-center space-x-2 mb-3">
+              <span id="modalDiagnosisBadge" class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold"></span>
+              <span id="modalRiskBadge" class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold"></span>
+            </div>
+
+            <div class="space-y-2 text-xs text-slate-600">
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Scan ID:</span>
+                <span id="modalScanId" class="font-mono font-bold text-slate-800">KS-2026-0892</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Recorded By:</span>
+                <span id="modalSubmitter" class="font-bold text-slate-800">Juan Dela Cruz</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Confidence Score:</span>
+                <span id="modalConfidence" class="font-mono font-bold text-slate-800">96.4%</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Risk Assessment:</span>
+                <span id="modalRiskAssessment" class="font-semibold text-slate-800 text-right">High Risk</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Farm Zone:</span>
+                <span id="modalZone" class="font-semibold text-slate-800">Zone B – River Basin</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Tree Information:</span>
+                <span id="modalTree" class="font-semibold text-slate-800">Tree #241 (Puyat)</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Scanned Date &amp; Time:</span>
+                <span id="modalTimestamp" class="font-medium text-slate-700">September 24, 2026 — 10:25 AM</span>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="text-slate-400">Bounding Box Coords:</span>
+                <span id="modalCoords" class="font-mono text-[11px] text-slate-700">[135, 110, 230, 165]</span>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3.5 rounded-xl bg-white border border-slate-200 text-xs">
+              <div class="font-bold text-slate-800 mb-1 flex items-center">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 mr-1.5 text-leafGreen"></i> Agronomic Advisory
+              </div>
+              <p id="modalRemedyRecommendation" class="text-slate-600 leading-relaxed text-[11px]">
+                Target tissue shows active pathogen lesion. Immediate systemic fungicide application recommended.
+              </p>
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center space-x-2">
+            <button id="closeModalBottomBtn" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow">
+              Dismiss Inspector
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script src="js/shared-state.js"></script>
+  <script src="js/photo-repository.js"></script>
+</body>
+</html>

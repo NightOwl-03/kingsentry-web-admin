@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Treatments | King's Sentry Admin</title>
+  <meta name="description" content="2026 Season Formulary — standardized fungicide protocols, bio-control rotation, and application guidelines for Barangay Sinoron durian orchard.">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emeraldDark: '#0d2319', emeraldMid: '#163a2b', leafGreen: '#235940',
+            leafMint: '#42b883', leafLight: '#d8f3dc', warningGold: '#d4a373',
+            alertRed: '#bc4749', cardBg: '#ffffff', softSlate: '#f4f7f5'
+          },
+          fontFamily: { sans: ['Inter','sans-serif'], display: ['Outfit','sans-serif'] },
+          boxShadow: {
+            'card': '0 4px 20px -2px rgba(15,33,25,0.05),0 2px 6px -1px rgba(15,33,25,0.03)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/manage-treatments.css">
+</head>
+<body class="text-slate-800 antialiased flex min-h-screen selection:bg-leafGreen selection:text-white bg-[#f8fafc]">
+
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity"></div>
+
+  <aside id="sidebar" class="fixed lg:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-[#142e1e] flex flex-col justify-between shrink-0 h-screen overflow-y-auto select-none transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 border-r border-emerald-950/40 shadow-2xl lg:shadow-none">
+    <div>
+      <div class="px-6 pt-7 pb-6 flex items-center justify-between">
+        <a href="dashboard.html" class="text-xl font-display font-bold text-[#8dc572] tracking-tight no-underline">
+          King's Sentry Admin
+        </a>
+        <button id="closeSidebarMobileBtn" class="lg:hidden text-[#b0c7b3] hover:text-white p-1 rounded-lg hover:bg-white/10" aria-label="Close Navigation">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <nav class="space-y-0.5" aria-label="Main Navigation">
+        <a href="dashboard.html" class="nav-link">Dashboard</a>
+        <a href="photo-repository.html" class="nav-link">Photo Repository</a>
+        <a href="manage-treatments.html" class="nav-link active" aria-current="page">Manage Treatments</a>
+        <a href="user-accounts.html" class="nav-link">User Accounts</a>
+      </nav>
+    </div>
+
+    <div class="p-6">
+      <button id="logoutBtn" class="text-sm font-medium text-[#e57373] hover:text-red-300 transition-colors flex items-center gap-2 cursor-pointer bg-transparent border-0 p-0 text-left">
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex-1 flex flex-col min-w-0 min-h-screen bg-[#f8fafc] overflow-y-auto">
+
+    <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 py-3 flex items-center justify-between shadow-xs">
+      <div class="flex items-center space-x-3">
+        <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" aria-label="Open Navigation">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div class="flex items-center text-xs text-slate-600 font-medium space-x-2">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-warningGold shrink-0"></i>
+          <span class="truncate font-semibold text-slate-800">Barangay Sinoron, Santa Cruz</span>
+          <span class="hidden md:inline text-[11px] text-slate-500 font-medium">Davao del Sur</span>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <div class="hidden xl:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-800">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-leafMint opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-leafGreen"></span>
+          </span>
+          <span class="font-medium">Sinoron Edge Node</span>
+        </div>
+        <div class="flex items-center space-x-2.5 pl-2 border-l border-slate-200">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-leafGreen to-emerald-900 flex items-center justify-center font-bold text-xs text-white shadow-xs">AT</div>
+          <div class="hidden sm:block text-left">
+            <div class="text-xs font-bold text-slate-800 leading-tight">Dr. Aris Evans</div>
+            <div class="text-[10px] text-slate-500 font-semibold uppercase">Chief Agronomist</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1500px] w-full mx-auto space-y-6">
+
+      <div class="bg-white p-6 rounded-3xl shadow-card border border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-xl sm:text-2xl font-display font-extrabold text-slate-900">Treatment &amp; Prevention Hub</h1>
+            <span class="bg-amber-100 text-amber-900 text-xs font-bold px-2.5 py-0.5 rounded-full">2026 Season Formulary</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Standardized fungicide remedies, bio-control rotation, and application guidelines for Barangay Sinoron.
+          </p>
+        </div>
+        <button id="openAddRemedyBtn" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow transition-all active:scale-95">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Add / Edit Remedy</span>
+        </button>
+      </div>
+
+      <div class="flex items-center space-x-2 overflow-x-auto pb-1">
+        <button class="treatment-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-[#1b4332] text-white shadow-sm" data-filter="ALL">
+          All Protocols (<span id="countAllRemedies">0</span>)
+        </button>
+        <button class="treatment-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200" data-filter="Leaf Spot">
+          Leaf Spot Protocols (<span id="countSpotRemedies">0</span>)
+        </button>
+        <button class="treatment-filter-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200" data-filter="Leaf Blight">
+          Leaf Blight Outbreaks (<span id="countBlightRemedies">0</span>)
+        </button>
+      </div>
+
+      <div id="remediesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      </div>
+
+    </main>
+  </div>
+
+  <div id="remedyModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-lg w-full overflow-hidden">
+      <div class="px-6 py-4 bg-[#0d2319] text-white flex items-center justify-between border-b border-emerald-900/60">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="flask-conical" class="w-5 h-5 text-leafMint"></i>
+          <h2 class="font-display font-bold text-base sm:text-lg text-white">Add Treatment Protocol</h2>
+        </div>
+        <button id="closeRemedyModal" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition-colors" aria-label="Close modal">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="remedyForm" class="p-6 space-y-4 text-xs sm:text-sm">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyTargetDisease">Target Disease Class *</label>
+          <select id="remedyTargetDisease" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+            <option value="Leaf Spot">Leaf Spot (Warning Gold — Cercospora/Algal)</option>
+            <option value="Leaf Blight">Leaf Blight (Alert Red — Phytophthora/Rhizoctonia)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyName">Fungicide / Remedy Trade Name *</label>
+          <input type="text" id="remedyName" required placeholder="e.g. Copper Oxychloride 50 WP or Ridomil Gold" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyActiveIngredient">Active Ingredient &amp; Mode of Action</label>
+          <input type="text" id="remedyActiveIngredient" placeholder="e.g. 50% Copper Hydroxide (FRAC M01 Protective)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyYear">Active Effective Year *</label>
+          <input type="number" id="remedyYear" required value="2026" min="2024" max="2035" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="remedyGuidelines">Application Guidelines &amp; Dosage *</label>
+          <textarea id="remedyGuidelines" required rows="3" placeholder="Specify dilution rate, foliar misting interval, and pre-harvest interval..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none"></textarea>
+        </div>
+        <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-100">
+          <button type="button" id="cancelRemedyBtn" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition-colors">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white font-bold transition-colors shadow">Save Protocol to Formulary</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <script src="js/shared-state.js"></script>
+  <script src="js/manage-treatments.js"></script>
+</body>
+</html>
