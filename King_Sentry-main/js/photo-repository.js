@@ -1,5 +1,3 @@
-
-
 const appState = {
   activeUserId: null,
   activeScan: null,
@@ -8,8 +6,46 @@ const appState = {
   highVeinContrast: false
 };
 
+const PHOTO_API_BASE = 'http://localhost:3000/api';
+let repositoryUsers = [];
+const userScansStore = {};
+const scanPhotoCache = new Map();
+
+// Draws the real scan photo (signed Supabase Storage URL) cover-fitted into the canvas.
+function drawScanPhoto(canvas, scan, options = {}) {
+  const url = scan.image_url;
+  const paint = (img) => {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#07160f';
+    ctx.fillRect(0, 0, w, h);
+    const scale = Math.max(w / img.width, h / img.height);
+    const dw = img.width * scale;
+    const dh = img.height * scale;
+    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  };
+
+  const cached = scanPhotoCache.get(url);
+  if (cached && cached.complete && cached.naturalWidth) {
+    paint(cached);
+    return;
+  }
+
+  const img = new Image();
+  img.onload = () => { scanPhotoCache.set(url, img); paint(img); };
+  // Photo missing/expired -> fall back to the schematic leaf.
+  img.onerror = () => { drawDurianLeaf(canvas, { ...scan, image_url: null }, options); };
+  img.src = url;
+}
+
 function drawDurianLeaf(canvas, scan, options = {}) {
   if (!canvas || !scan) return;
+  if (scan.image_url) {
+    drawScanPhoto(canvas, scan, options);
+    return;
+  }
   const ctx = canvas.getContext('2d');
   const w = canvas.width;
   const h = canvas.height;
@@ -222,26 +258,168 @@ function drawDurianLeaf(canvas, scan, options = {}) {
   }
 }
 
-async function renderUsersTable() {
+function setElText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function timeAgo(iso) {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return '';
+  const mins = Math.floor((Date.now() - t) / 60000);
+  if (mins < 1) return 'Moments ago';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+function formatScanDateTime(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'Unknown date';
+  return d.toLocaleString('en-PH', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function mapApiUser(u) {
+  const name = u.username || u.email || 'Unnamed user';
+  const hasScans = !!u.latest_scan_at;
+  return {
+    id: u.id,
+    name,
+    email: u.email || 'No email',
+    role: String(u.role || 'farmer').replace(/^./, (c) => c.toUpperCase()),
+    zone: u.zone || 'No orchard yet',
+    avatarInitials: name.substring(0, 2).toUpperCase(),
+    scansCount: Number(u.scans_count) || 0,
+    latestScan: hasScans
+      ? new Date(u.latest_scan_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })
+      : 'No scans yet',
+    latestScanTime: hasScans ? timeAgo(u.latest_scan_at) : '',
+  };
+}
+
+function mapApiScan(s) {
+  const when = formatScanDateTime(s.scan_timestamp);
+  return {
+    id: s.id,
+    shortId: s.short_id || String(s.id).slice(0, 8),
+    detectedClass: s.detected_class || 'Unknown',
+    confidence: Number(s.confidence_pct) || 0,
+    riskLevel: s.risk_level || 'Low',
+    zone: s.orchard_name || 'N/A',
+    treeNumber: '',
+    treeId: 'N/A',
+    cultivar: 'Durian',
+    timestamp: when,
+    timestampFull: when,
+    latency: 'N/A',
+    bbox: { x: 85, y: 70, w: 380, h: 240 },
+    notes: '',
+    advisory: s.advisory || '',
+    image_url: s.image_url || null,
+  };
+}
+
+async function loadRepositoryData() {
+  const tbody = document.getElementById('usersTableBody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-slate-400 text-sm">Loading farmers...</td></tr>`;
+  }
+
+  try {
+    const response = await authFetch(`${PHOTO_API_BASE}/users`);
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || `HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    repositoryUsers = (Array.isArray(data) ? data : []).map(mapApiUser);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    repositoryUsers = [];
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-red-500 text-sm">Error loading users (${escapeHtml(error.message)}). Make sure the Node server is running.</td></tr>`;
+    }
+    return false;
+  }
+
+  renderUsersTable();
+  return true;
+}
+
+function renderUsersTable() {
   const tbody = document.getElementById('usersTableBody');
   if (!tbody) return;
-  
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="5" class="py-12 text-center text-slate-400 text-sm">
-        <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
-        Walay scan records nga nakita sa database.
+
+  // This table's columns are defined here so the header always matches the rows.
+  const thead = tbody.closest('table')?.querySelector('thead');
+  if (thead) {
+    thead.innerHTML = `
+      <tr>
+        <th class="py-3.5 px-4">Farmer</th>
+        <th class="py-3.5 px-4">Farm Zone</th>
+        <th class="py-3.5 px-4">Scans</th>
+        <th class="py-3.5 px-4">Latest Scan</th>
+        <th class="py-3.5 px-4 text-right">Action</th>
+      </tr>
+    `;
+  }
+
+  const search = (document.getElementById('userSearchInput')?.value || '').toLowerCase().trim();
+  const roleFilter = (document.getElementById('userRoleFilter')?.value || 'ALL').toUpperCase();
+
+  const visible = repositoryUsers.filter((u) => {
+    const matchSearch = !search || u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+    const matchRole = roleFilter === 'ALL' || roleFilter === '' || u.role.toUpperCase() === roleFilter;
+    return matchSearch && matchRole;
+  });
+
+  setElText('displayedUserCount', String(visible.length));
+  setElText('statTotalUsers', `${repositoryUsers.length} ${repositoryUsers.length === 1 ? 'Farmer' : 'Farmers'}`);
+  setElText('statTotalScans', `${repositoryUsers.reduce((sum, u) => sum + u.scansCount, 0)} Records`);
+
+  if (visible.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-12 text-center text-slate-400 text-sm">
+          <i data-lucide="users" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+          Walay farmers nga nakita sa database.
+        </td>
+      </tr>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  tbody.innerHTML = visible.map((u) => `
+    <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="selectUser('${escapeHtml(u.id)}')">
+      <td class="py-3 px-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">${escapeHtml(u.avatarInitials)}</div>
+          <div>
+            <div class="font-bold text-slate-900">${escapeHtml(u.name)}</div>
+            <div class="text-[11px] text-slate-400">${escapeHtml(u.email)}</div>
+          </div>
+        </div>
+      </td>
+      <td class="py-3 px-4 text-xs text-slate-600">${escapeHtml(u.zone)}</td>
+      <td class="py-3 px-4 font-mono text-xs font-bold text-slate-800">${u.scansCount}</td>
+      <td class="py-3 px-4 text-xs text-slate-600">
+        ${escapeHtml(u.latestScan)}${u.latestScanTime ? `<div class="text-[11px] text-slate-400">${escapeHtml(u.latestScanTime)}</div>` : ''}
+      </td>
+      <td class="py-3 px-4 text-right">
+        <button class="px-3 py-1.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95">
+          View Scans
+        </button>
       </td>
     </tr>
-  `;
-  document.getElementById('displayedUserCount').textContent = "0";
-  document.getElementById('statTotalUsers').textContent = "0 Farmers / Staff";
-  document.getElementById('statTotalScans').textContent = "0 Records";
+  `).join('');
   lucide.createIcons();
 }
 
-function selectUser(userId) {
-  const user = repositoryUsers.find(u => u.id === userId);
+async function selectUser(userId) {
+  const user = repositoryUsers.find((u) => u.id === userId);
   if (!user) return;
 
   appState.activeUserId = userId;
@@ -260,11 +438,9 @@ function selectUser(userId) {
   if (avatarEl) avatarEl.textContent = user.avatarInitials;
   if (emailEl) emailEl.textContent = user.email;
   if (zoneEl) zoneEl.textContent = user.zone;
-  if (latestEl) latestEl.textContent = `${user.latestScan} — ${user.latestScanTime}`;
+  if (latestEl) latestEl.textContent = [user.latestScan, user.latestScanTime].filter(Boolean).join(' — ');
   if (roleEl) roleEl.textContent = user.role;
-
-  const scans = userScansStore[userId] || [];
-  if (badgeEl) badgeEl.textContent = `${scans.length} Scan Records`;
+  if (badgeEl) badgeEl.textContent = 'Loading scans...';
 
   const searchInput = document.getElementById('scanSearchInput');
   const diseaseSelect = document.getElementById('scanFilterDisease');
@@ -275,15 +451,32 @@ function selectUser(userId) {
 
   const userListView = document.getElementById('userListView');
   const userScanView = document.getElementById('userScanView');
-
   if (userListView && userScanView) {
     userListView.classList.add('hidden');
     userScanView.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  try {
+    const response = await authFetch(`${PHOTO_API_BASE}/users/${encodeURIComponent(userId)}/scans`);
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || `HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    userScansStore[userId] = (Array.isArray(data) ? data : []).map(mapApiScan);
+  } catch (error) {
+    console.error('Error fetching scans:', error);
+    userScansStore[userId] = [];
+    showToast(`Could not load scans: ${error.message}`, 'Leaf Blight');
+  }
+
+  // The user may have gone back / picked someone else while loading.
+  if (appState.activeUserId !== userId) return;
+
+  const scans = userScansStore[userId];
+  if (badgeEl) badgeEl.textContent = `${scans.length} Scan Records`;
   renderUserScans();
-  showToast(`Opened scan repository for ${user.name} (${scans.length} records)`, 'Healthy');
 }
 
 function backToUsers() {
@@ -297,6 +490,18 @@ function backToUsers() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   renderUsersTable();
+}
+
+async function refreshRepository() {
+  const activeId = appState.activeUserId;
+  await loadRepositoryData();
+  if (activeId) await selectUser(activeId);
+  showToast('Repository refreshed from database', 'Healthy');
+}
+
+function openUserFromUrl() {
+  const wanted = new URLSearchParams(window.location.search).get('user');
+  if (wanted && repositoryUsers.some((u) => u.id === wanted)) selectUser(wanted);
 }
 
 function renderUserScans() {
@@ -353,7 +558,7 @@ function renderUserScans() {
       let riskIcon = 'check-circle-2';
       let dotColor = 'bg-emerald-500';
       let barColor = 'bg-[#2d6a4f]';
-      let diseaseBadgeClass = 'bg-emerald-100 text-[#1b4332] border border-emerald-300';
+      let diseaseBadgeClass = scan.detectedClass === 'Unknown' ? getBadgeClass('Unknown') : 'bg-emerald-100 text-[#1b4332] border border-emerald-300';
 
       if (scan.riskLevel === 'High') {
         riskBadgeClass = 'badge-risk-high';
@@ -378,7 +583,7 @@ function renderUserScans() {
         <div class="px-5 py-3.5 bg-slate-50/90 border-b border-slate-100 flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full ${dotColor}"></span>
-            <span class="font-mono font-bold text-slate-900 text-sm tracking-tight">${scan.id}</span>
+            <span class="font-mono font-bold text-slate-900 text-sm tracking-tight">${scan.shortId}</span>
           </div>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${riskBadgeClass}">
             <i data-lucide="${riskIcon}" class="w-3 h-3 mr-1"></i>
@@ -392,7 +597,7 @@ function renderUserScans() {
           
           <div class="absolute top-3 left-3 bg-black/70 backdrop-blur-xs px-2.5 py-1 rounded-md text-[10px] font-mono text-emerald-400 border border-emerald-500/20 flex items-center space-x-1.5">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>YOLO26-CV • ${scan.latency}</span>
+            <span>YOLO26-CV</span>
           </div>
 
           <div class="absolute bottom-3 right-3 bg-black/70 backdrop-blur-xs px-2.5 py-1 rounded-md text-[10px] font-mono text-slate-300 border border-slate-700/40">
@@ -473,7 +678,7 @@ function renderUserScans() {
 
     filtered.forEach(scan => {
       let riskBadgeClass = 'badge-risk-low';
-      let diseaseBadgeClass = 'bg-emerald-100 text-[#1b4332] border border-emerald-300';
+      let diseaseBadgeClass = scan.detectedClass === 'Unknown' ? getBadgeClass('Unknown') : 'bg-emerald-100 text-[#1b4332] border border-emerald-300';
       if (scan.riskLevel === 'High') {
         riskBadgeClass = 'badge-risk-high';
         diseaseBadgeClass = 'bg-rose-100 text-[#bc4749] border border-rose-300';
@@ -485,7 +690,7 @@ function renderUserScans() {
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-slate-50 transition-colors';
       tr.innerHTML = `
-        <td class="py-3 px-4 font-mono font-bold text-slate-800">${scan.id}</td>
+        <td class="py-3 px-4 font-mono font-bold text-slate-800">${scan.shortId}</td>
         <td class="py-3 px-4">
           <div class="w-16 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
             <canvas id="table-canvas-${scan.id}" width="120" height="75" class="w-full h-full object-cover"></canvas>
@@ -545,7 +750,7 @@ function openScanDetailsModal(scanId) {
   if (!foundScan) return;
   appState.activeScan = foundScan;
 
-  document.getElementById('modalScanIdTitle').textContent = `Scan Details: ${foundScan.id}`;
+  document.getElementById('modalScanIdTitle').textContent = `Scan Details: ${foundScan.shortId || foundScan.id}`;
   document.getElementById('modalSubTitle').textContent = `Recorded by ${submitterName} • ${foundScan.timestampFull}`;
   document.getElementById('modalScanId').textContent = foundScan.id;
   document.getElementById('modalSubmitter').textContent = submitterName;
@@ -554,7 +759,7 @@ function openScanDetailsModal(scanId) {
   document.getElementById('modalTree').textContent = `${foundScan.treeId || foundScan.treeNumber} (${foundScan.cultivar || 'Durian'})`;
   document.getElementById('modalTimestamp').textContent = foundScan.timestampFull || foundScan.timestamp;
   document.getElementById('modalCoords').textContent = `[x:${foundScan.bbox.x}, y:${foundScan.bbox.y}, w:${foundScan.bbox.w}, h:${foundScan.bbox.h}]`;
-  document.getElementById('modalRemedyRecommendation').textContent = foundScan.advisory || foundScan.notes;
+  document.getElementById('modalRemedyRecommendation').textContent = foundScan.advisory || foundScan.notes || 'No treatment recommendation is available for this diagnosis yet.';
 
   const diagBadge = document.getElementById('modalDiagnosisBadge');
   let diagBadgeClass = 'bg-emerald-100 text-[#1b4332] border border-emerald-300';
@@ -600,76 +805,9 @@ function closeScanDetailsModal() {
   appState.activeScan = null;
 }
 
-function simulateScanForActiveUser() {
-  const userId = appState.activeUserId || "USR-001";
-  const user = repositoryUsers.find(u => u.id === userId);
-  const userScans = userScansStore[userId];
-  if (!user || !userScans) return;
-
-  const randomNum = Math.floor(Math.random() * 800) + 200;
-  const scanId = `KS-2026-0${randomNum}`;
-  const cultivars = ['Puyat Cultivar', 'Duyaya Cultivar', 'Arancillo Cultivar'];
-  const treeNum = `#${Math.floor(Math.random() * 350) + 1}`;
-  const cultivar = cultivars[Math.floor(Math.random() * cultivars.length)];
-
-  const rand = Math.random();
-  let detectedClass = 'Healthy';
-  let riskLevel = 'Low';
-  let bbox = { x: 85, y: 70, w: 380, h: 240 };
-  let notes = "Optimal foliar vigor and rich chlorophyll saturation without pathogen lesions.";
-  let advisory = "Maintain standard orchard nutritional foliar spray schedule.";
-
-  if (rand > 0.65) {
-    detectedClass = 'Leaf Blight';
-    riskLevel = 'High';
-    bbox = { x: 140, y: 105, w: 215, h: 160 };
-    notes = "Acute necrotic blight spreading along main lateral vein. High humidity risk.";
-    advisory = "Immediately spray systemic Ridomil Gold MZ at 2.5g/L. Isolate affected branches.";
-  } else if (rand > 0.35) {
-    detectedClass = 'Leaf Spot';
-    riskLevel = 'Moderate';
-    bbox = { x: 190, y: 130, w: 145, h: 125 };
-    notes = "Target-board circular chlorotic spot observed on adaxial leaf lamina.";
-    advisory = "Preventive application of Copper Oxychloride 50 WP during early morning.";
-  }
-
-  const confidence = parseFloat((Math.random() * 6 + 93.5).toFixed(1));
-  const latency = (Math.random() * 3 + 11.5).toFixed(1) + " ms";
-
-  const newScan = {
-    id: scanId,
-    detectedClass,
-    confidence,
-    riskLevel,
-    zone: user.zone,
-    treeNumber: treeNum,
-    treeId: `Tree ${treeNum} (${cultivar.split(' ')[0]})`,
-    cultivar,
-    timestamp: "Just now",
-    timestampFull: "September 24, 2026 — Just now",
-    latency,
-    bbox,
-    notes,
-    advisory,
-    gps: "6.8124° N, 125.4021° E"
-  };
-
-  userScans.unshift(newScan);
-  user.latestScan = "Just now";
-  user.latestScanTime = "Moments ago";
-
-  if (appState.activeUserId) {
-    document.getElementById('userScanBadge').textContent = `${userScans.length} Scan Records`;
-    renderUserScans();
-  }
-  renderUsersTable();
-
-  showToast(`New Scan Recorded: ${scanId} (${detectedClass}) for ${user.name}`, detectedClass);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   lucide.createIcons();
-  renderUsersTable();
+  loadRepositoryData().then(openUserFromUrl);
 
   const userSearch = document.getElementById('userSearchInput');
   if (userSearch) {
@@ -738,12 +876,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const simulateUserScanBtn = document.getElementById('simulateUserScanBtn');
   if (simulateUserScanBtn) {
-    simulateUserScanBtn.addEventListener('click', simulateScanForActiveUser);
+    simulateUserScanBtn.addEventListener('click', refreshRepository);
   }
 
   const quickSimulateBtn = document.getElementById('quickSimulateBtn');
   if (quickSimulateBtn) {
-    quickSimulateBtn.addEventListener('click', simulateScanForActiveUser);
+    quickSimulateBtn.addEventListener('click', refreshRepository);
   }
 
   const closeModalBtn = document.getElementById('closeModalBtn');
@@ -792,10 +930,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (window.location.hash) {
-    const hash = window.location.hash.toLowerCase();
-    if (hash.includes('juan')) selectUser('USR-001');
-    else if (hash.includes('pedro')) selectUser('USR-002');
-    else if (hash.includes('maria')) selectUser('USR-003');
-  }
 });

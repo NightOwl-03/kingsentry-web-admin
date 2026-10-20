@@ -48,6 +48,23 @@ document.addEventListener('DOMContentLoaded', () => {
     .forEach(el => { el.textContent = initials; });
 });
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// fetch() that sends the admin's access token (if login.html stored one in kingsentry_current_user.access_token)
+function authFetch(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  const token = currentUserInfo && currentUserInfo.access_token;
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  return fetch(url, { ...options, headers });
+}
+
 function getBadgeClass(diseaseClass) {
   switch (diseaseClass) {
     case 'Healthy':
@@ -56,6 +73,8 @@ function getBadgeClass(diseaseClass) {
       return 'bg-amber-100 text-amber-900 border border-amber-300';
     case 'Leaf Blight':
       return 'bg-rose-100 text-[#bc4749] border border-rose-300';
+    case 'Unknown':
+      return 'bg-slate-100 text-slate-600 border border-slate-300';
     default:
       return 'bg-slate-100 text-slate-800';
   }

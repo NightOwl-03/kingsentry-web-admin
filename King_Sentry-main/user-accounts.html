@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Accounts | King's Sentry Admin</title>
-  <meta name="description" content="RBAC-controlled user account management for King's Sentry — manage field technicians, certified agronomists, and system administrators.">
+  <meta name="description" content="Field farmers registered through the King's Sentry mobile app and their scan activity.">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -103,41 +103,41 @@
             <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-0.5 rounded-full">RBAC Controlled</span>
           </div>
           <p class="text-xs sm:text-sm text-slate-500 mt-1">
-            Manage field technicians, certified agronomists, and system administrators.
+            Field farmers registered through the King's Sentry mobile app, with their orchards and scan activity.
           </p>
         </div>
-        <button id="openRegisterUserBtn" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow transition-all active:scale-95">
-          <i data-lucide="user-plus" class="w-4 h-4"></i>
-          <span>Register New User</span>
+        <button id="refreshUsersBtn" class="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow transition-all active:scale-95">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>Refresh</span>
         </button>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="role-overview-card bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-            <i data-lucide="shield" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Administrator</div>
-            <div id="adminCount" class="text-lg font-extrabold text-slate-800">2 Accounts</div>
-          </div>
-        </div>
-        <div class="role-overview-card bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
-            <i data-lucide="microscope" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <div class="text-xs text-slate-400 font-bold uppercase">Agronomists</div>
-            <div id="agronomistCount" class="text-lg font-extrabold text-slate-800">2 Accounts</div>
-          </div>
-        </div>
         <div class="role-overview-card bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
           <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
             <i data-lucide="tractor" class="w-5 h-5"></i>
           </div>
           <div>
             <div class="text-xs text-slate-400 font-bold uppercase">Field Farmers</div>
-            <div id="farmerCount" class="text-lg font-extrabold text-slate-800">1 Account</div>
+            <div id="farmerCount" class="text-lg font-extrabold text-slate-800">0 Accounts</div>
+          </div>
+        </div>
+        <div class="role-overview-card bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+            <i data-lucide="user-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-bold uppercase">Active Accounts</div>
+            <div id="activeCount" class="text-lg font-extrabold text-slate-800">0 Accounts</div>
+          </div>
+        </div>
+        <div class="role-overview-card bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
+            <i data-lucide="scan" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400 font-bold uppercase">Total Scans</div>
+            <div id="scanTotalCount" class="text-lg font-extrabold text-slate-800">0 Records</div>
           </div>
         </div>
       </div>
@@ -147,12 +147,12 @@
           <table class="w-full text-left text-xs sm:text-sm">
             <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-[11px] tracking-wider border-b border-slate-100">
               <tr>
-                <th class="py-3.5 px-4">Staff Member</th>
-                <th class="py-3.5 px-4">Role Badge</th>
-                <th class="py-3.5 px-4">Assigned Farm Zone</th>
+                <th class="py-3.5 px-4">Farmer</th>
+                <th class="py-3.5 px-4">Role</th>
+                <th class="py-3.5 px-4">Orchard(s)</th>
                 <th class="py-3.5 px-4">Status</th>
                 <th class="py-3.5 px-4">Registration Date</th>
-                <th class="py-3.5 px-4 text-right">Actions</th>
+                <th class="py-3.5 px-4 text-right">Scans</th>
               </tr>
             </thead>
             <tbody id="usersTableBody" class="divide-y divide-slate-100 font-medium text-slate-700">
@@ -162,53 +162,6 @@
       </div>
 
     </main>
-  </div>
-
-  <div id="userModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-    <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
-      <div class="px-6 py-4 bg-[#0d2319] text-white flex items-center justify-between border-b border-emerald-900/60">
-        <div class="flex items-center space-x-2">
-          <i data-lucide="user-plus" class="w-5 h-5 text-leafMint"></i>
-          <h2 class="font-display font-bold text-base sm:text-lg text-white">Register Sentry Personnel</h2>
-        </div>
-        <button id="closeUserModal" class="p-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200 hover:text-white transition-colors" aria-label="Close modal">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
-
-      <form id="userForm" class="p-6 space-y-4 text-xs sm:text-sm">
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userFullName">Full Name *</label>
-          <input type="text" id="userFullName" required placeholder="e.g. Maria Clara Santos" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userEmail">Work Email Address *</label>
-          <input type="email" id="userEmail" required placeholder="mc.santos@kingsentry.ph" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userRole">System Privilege Role *</label>
-          <select id="userRole" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
-            <option value="AGRONOMIST">AGRONOMIST (Pathology validation &amp; remedies)</option>
-            <option value="FARMER">FARMER (Mobile edge scanning &amp; field logging)</option>
-            <option value="ADMIN">ADMIN (Full system access &amp; configuration)</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="userZone">Assigned Farm Zone *</label>
-          <select id="userZone" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 focus:ring-2 focus:ring-leafGreen focus:outline-none">
-            <option value="All Orchard Zones">All Orchard Zones (General)</option>
-            <option value="Zone A - Upper Slope">Zone A - Upper Slope</option>
-            <option value="Zone B - River Basin">Zone B - River Basin</option>
-            <option value="Zone C - Central Ridge">Zone C - Central Ridge</option>
-            <option value="Zone D - Nursery Block">Zone D - Nursery Block</option>
-          </select>
-        </div>
-        <div class="pt-3 flex items-center justify-end space-x-3 border-t border-slate-100">
-          <button type="button" id="cancelUserBtn" class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold transition-colors">Cancel</button>
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-leafGreen hover:bg-emerald-700 text-white font-bold transition-colors shadow">Create Account</button>
-        </div>
-      </form>
-    </div>
   </div>
 
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>

@@ -1,4 +1,3 @@
-
 let doughnutChartInstance = null;
 let zoneChartInstance = null;
 
@@ -24,10 +23,10 @@ function initCharts() {
     doughnutChartInstance = new Chart(doughnutEl.getContext('2d'), {
       type: 'doughnut',
       data: {
-        labels: ['Healthy', 'Leaf Spot', 'Leaf Blight'],
+        labels: ['Healthy', 'Leaf Spot', 'Leaf Blight', 'Unknown'],
         datasets: [{
-          data: [0, 0, 0],
-          backgroundColor: ['#2d6a4f', '#d4a373', '#bc4749'],
+          data: [0, 0, 0, 0],
+          backgroundColor: ['#2d6a4f', '#d4a373', '#bc4749', '#94a3b8'],
           borderWidth: 4,
           borderColor: '#ffffff',
           hoverOffset: 8
@@ -85,13 +84,15 @@ function renderKPIs(kpis) {
   const healthy = Number(kpis.healthy)    || 0;
   const spot    = Number(kpis.leafSpot)   || 0;
   const blight  = Number(kpis.leafBlight) || 0;
+  const unknown = Number(kpis.unknown)    || 0;
 
-  state.kpis = { total, healthy, leafSpot: spot, leafBlight: blight };
+  state.kpis = { total, healthy, leafSpot: spot, leafBlight: blight, unknown };
 
   setText('kpiTotalScans', total.toLocaleString());
   setText('kpiHealthy',    healthy.toLocaleString());
   setText('kpiLeafSpot',   spot.toLocaleString());
   setText('kpiLeafBlight', blight.toLocaleString());
+  setText('kpiUnknown',    unknown.toLocaleString());   // optional element, ignored if missing
 
   const pct = (n) => (total > 0 ? ((n / total) * 100).toFixed(1) : '0.0');
   const hp = pct(healthy), sp = pct(spot), bp = pct(blight);
@@ -108,14 +109,14 @@ function renderKPIs(kpis) {
   setText('centerHealthPct', `${Math.round(parseFloat(hp))}%`);
 
   if (doughnutChartInstance) {
-    doughnutChartInstance.data.datasets[0].data = [healthy, spot, blight];
+    doughnutChartInstance.data.datasets[0].data = [healthy, spot, blight, unknown];
     doughnutChartInstance.update();
   }
 }
 
 async function updateKPIsAndCharts() {
   try {
-    const response = await fetch(`${API_BASE}/kpis`);
+    const response = await authFetch(`${API_BASE}/kpis`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     renderKPIs(await response.json());
   } catch (error) {
@@ -129,7 +130,7 @@ async function renderRecentScansFeed() {
   if (!recentBody) return;
 
   try {
-    const response = await fetch(`${API_BASE}/scans`);
+    const response = await authFetch(`${API_BASE}/scans?limit=100`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const realScans = await response.json();
 
@@ -142,17 +143,18 @@ async function renderRecentScansFeed() {
     }
 
     state.scans.slice(0, 5).forEach(scan => {
-      const detectedClass = scan.disease_dictionary ? scan.disease_dictionary.disease_name : 'Healthy';
-      const confidence = (Number(scan.confidence_score) || 0) * 100;
+      const detectedClass = scan.detected_class || 'Unknown';
+      const confidence = Math.min(Number(scan.confidence_pct) || 0, 100);
       const badgeClass = getBadgeClass(detectedClass);
       const barColor = detectedClass === 'Healthy' ? 'bg-[#2d6a4f]'
-                     : detectedClass === 'Leaf Spot' ? 'bg-[#d4a373]' : 'bg-[#bc4749]';
+                     : detectedClass === 'Leaf Spot' ? 'bg-[#d4a373]'
+                     : detectedClass === 'Leaf Blight' ? 'bg-[#bc4749]' : 'bg-slate-400';
 
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-slate-50 transition-colors';
       tr.innerHTML = `
         <td class="py-3 px-4 font-mono font-bold text-slate-800">${String(scan.id).substring(0, 8)}...</td>
-        <td class="py-3 px-4"><span class="font-bold text-slate-900">Sinoron Orchard</span></td>
+        <td class="py-3 px-4"><span class="font-bold text-slate-900">${escapeHtml(scan.orchard_name || 'Unknown orchard')}</span></td>
         <td class="py-3 px-4">
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${badgeClass}">${detectedClass}</span>
         </td>
@@ -210,12 +212,12 @@ function togglePanel(panelId, forceState) {
 window.togglePanel = togglePanel; 
 
 function normalizeScan(raw) {
-  const detectedClass = raw.disease_dictionary ? raw.disease_dictionary.disease_name : 'Healthy';
-  const confidence = Number(((Number(raw.confidence_score) || 0) * 100).toFixed(1));
+  const detectedClass = raw.detected_class || 'Unknown';
+  const confidence = Number(raw.confidence_pct) || 0;
   const bbox = raw.bbox || { x: 80, y: 70, w: 390, h: 240 };
   return {
     id: raw.id,
-    zone: raw.zone || 'Sinoron Orchard',
+    zone: raw.zone || raw.orchard_name || 'Unknown orchard',
     treeId: raw.tree_id || 'N/A',
     detectedClass,
     confidence,
@@ -356,14 +358,18 @@ function drawLeafInspectionCanvas(scan) {
 
   if (state.showBboxOverlay) {
     const { x, y, w: bw, h: bh } = scan.bbox;
-    const color = scan.detectedClass === 'Healthy' ? '#42b883' : scan.detectedClass === 'Leaf Spot' ? '#d4a373' : '#bc4749';
+    const color = scan.detectedClass === 'Healthy' ? '#42b883'
+                : scan.detectedClass === 'Leaf Spot' ? '#d4a373'
+                : scan.detectedClass === 'Leaf Blight' ? '#bc4749' : '#94a3b8';
     const labelText = `${scan.detectedClass} ${scan.confidence.toFixed(1)}%`;
 
     ctx.fillStyle = scan.detectedClass === 'Healthy'
       ? 'rgba(66, 184, 131, 0.12)'
       : scan.detectedClass === 'Leaf Spot'
       ? 'rgba(212, 163, 115, 0.18)'
-      : 'rgba(188, 71, 73, 0.22)';
+      : scan.detectedClass === 'Leaf Blight'
+      ? 'rgba(188, 71, 73, 0.22)'
+      : 'rgba(148, 163, 184, 0.15)';
     ctx.fillRect(x, y, bw, bh);
 
     ctx.strokeStyle = color;
